@@ -1,4 +1,4 @@
-module pm-store
+module github.com/horcu/pm-store
 
 go 1.22
 
