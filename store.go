@@ -2,14 +2,18 @@ package v1
 
 import (
 	"context"
+	"errors"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/db"
 	"fmt"
+	"github.com/google/uuid"
 	models "github.com/horcu/mafia-models"
 	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
 	"log"
+	"math/rand"
 	"os"
+	"strconv"
 	"sync"
 )
 
@@ -82,8 +86,8 @@ func (store *Store) Create(b interface{}, path string) error {
 	switch path {
 	case "players":
 		return store.CreatePlayer(b.(*models.Player))
-	case "game_groups":
-		return store.CreateGameGroup(b.(*models.Group))
+	//case "game_groups":
+	//	return store.CreateGameGroup(b.(*models.Group))
 	case "games":
 		return store.CreateGame(b.(*models.Game))
 	case "steps":
@@ -110,15 +114,6 @@ func (store *Store) CreateGame(b *models.Game) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if err := store.NewRef("games/"+b.Bin).Set(context.Background(), b); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (store *Store) CreateGameGroup(b *models.Group) error {
-	store.mu.Lock()
-	defer store.mu.Unlock()
-	if err := store.NewRef("game_groups/"+b.Bin).Set(context.Background(), b); err != nil {
 		return err
 	}
 	return nil
@@ -780,4 +775,698 @@ func (store *Store) UpdateGamer(gameId string, gamerId string, gx map[string]int
 		return false
 	}
 	return true
+}
+
+func (store *Store) AddAbilitiesToDb(abilities []*models.Ability) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	for _, a := range abilities {
+		err := store.Create(a, "abilities")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (store *Store) GetAbilitiesForCharacter(characterId string) ([]*models.Ability, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	var abilities []*models.Ability
+	character, err := store.GetByBin(characterId, "characters")
+	if err != nil {
+		return nil, err
+	}
+
+	var parsedChar = character.(*models.Character)
+	for _, bin := range parsedChar.Abilities {
+		ab, err := store.GetByBin(bin, "abilities")
+		if err != nil {
+			break
+		}
+		ability := ab.(*models.Ability)
+		abilities = append(abilities, ability)
+	}
+
+	return abilities, nil
+}
+
+func (store *Store) AddGamerToGame(gameId string, gamer *models.Gamer) interface{} {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// find game
+	game, err := store.GetByBin(gameId, "games")
+	if err != nil {
+		return err
+	}
+
+	//parse game into a Game struct object
+	g := game.(*models.Game)
+
+	// Add the player to the game's gamers' map
+	if g.Gamers == nil {
+		g.Gamers = make(map[string]*models.Gamer)
+	}
+
+	g.Gamers[gamer.Bin] = gamer
+
+	// update the game
+	err = store.Update(gameId, map[string]interface{}{
+		"gamers": g.Gamers,
+	}, "games")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (store *Store) SetNewStep(gameId string) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// find game
+	game, err := store.GetByBin(gameId, "games")
+	if err != nil {
+		return
+	}
+
+	//parse game into a Game struct object
+	g := game.(*models.Game)
+
+	// set the game's current step
+	g.CurrentStep = "1"
+
+	// update the game
+	err = store.Update(gameId, map[string]interface{}{
+		"current_step": g.CurrentStep,
+	}, "games")
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (store *Store) SetNextStep(gameId string) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// find game
+	game, err := store.GetByBin(gameId, "games")
+	if err != nil {
+		return
+	}
+
+	//parse game into a Game struct object
+	g := game.(*models.Game)
+
+	// get the current step
+	currentStep, err := store.getStepByBin(g.CurrentStep)
+	if err != nil {
+		return
+	}
+
+	// set the game's current step
+	g.CurrentStep = currentStep.Bin
+
+	// update the game
+	err = store.Update(gameId, map[string]interface{}{
+		"current_step": g.CurrentStep,
+	}, "games")
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (store *Store) AddAllCharactersToDb(chars []*models.Character) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	for _, s := range chars {
+		//s.Bin = strconv.Itoa(i)
+		err := store.Create(s, "characters")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (store *Store) AddGamerCharactersToGame(gameId string) ([]*models.Character, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	game, err := store.getGameByBin(gameId)
+	if err != nil {
+		return nil, err
+	}
+
+	charList := []*models.Character{}
+	for _, gamer := range game.Gamers {
+		char, err := store.GetByBin(gamer.CharacterId, "characters")
+		if err != nil {
+			break
+		}
+		var character = char.(*models.Character)
+		err = store.addToGame("characters", game.Bin, character)
+		charList = append(charList, character)
+		if err != nil {
+			break
+		}
+	}
+
+	return charList, nil
+}
+
+func (store *Store) InitializeGame(game *models.Game) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	err := store.Create(&game, "games")
+	if err != nil {
+		return
+	}
+}
+
+func (store *Store) AddRandomUsers(userNames []string, photoUrls []string) (bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	// generate users
+	for _, un := range userNames {
+		err := store.Create(&models.Player{
+			UserName: un,
+			Bin:      uuid.New().String(),
+			Photo:    photoUrls[rand.Intn(len(photoUrls))],
+			Status:   "available",
+			Privacy:  "public",
+		}, "player")
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return true, nil
+}
+
+func (store *Store) CreateGameGroup(groupName string, cap int, ownerId string, userIds []string) (bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// find all users and build a user object for each
+	var users []*models.Player
+	for _, uId := range userIds {
+		var user, _ = store.GetByBin(uId, "players")
+		users = append(users, user.(*models.Player))
+	}
+
+	owner, _ := store.GetByBin(ownerId, "players")
+
+	// create a group
+	store.Create(&models.Group{
+		Bin:       uuid.New().String(),
+		Creator:   owner.(*models.Player),
+		Members:   users,
+		GroupName: groupName,
+		Capacity:  cap,
+		Status:    "waiting",
+	}, "game_groups")
+
+	return true, nil
+
+}
+
+func (store *Store) AddPlayerToGroup(playerId string, groupId string) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// find a game group
+	gameGroup, err := store.GetByBin(groupId, "game_groups")
+	if err != nil {
+		return
+	}
+
+	// parse game group into a Group struct object
+	g := gameGroup.(*models.Group)
+
+	// find player
+	player, err := store.GetByBin(playerId, "players")
+	if err != nil {
+		return
+	}
+
+	// parse player into a Player struct object
+	p := player.(*models.Player)
+
+	// add player to the game group's members array
+	g.Members = append(g.Members, p)
+
+	// update the game group
+	err = store.Update(groupId, map[string]interface{}{
+		"members": g.Members,
+	}, "game_groups")
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (store *Store) RemovePlayerFromGroup(playerId string, groupId string) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// find a group
+	gameGroup, err := store.GetByBin(groupId, "game_groups")
+	if err != nil {
+		return
+	}
+
+	// parse game group into a Group struct object
+	g := gameGroup.(*models.Group)
+
+	// remove player from the game group's members array
+	for i, m := range g.Members {
+		if m.Bin == playerId {
+			g.Members = append(g.Members[:i], g.Members[i+1:]...)
+			break
+		}
+	}
+
+	// update the game group
+	err = store.Update(groupId, map[string]interface{}{
+		"members": g.Members,
+	}, "game_groups")
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (store *Store) InvitePlayerToGroup(playerId string, invitation *models.Invitation) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// find player
+	player, err := store.GetByBin(playerId, "players")
+	if err != nil {
+		return
+	}
+
+	// parse player into a Player struct object
+	p := player.(*models.Player)
+
+	// push invitation to player's invitation list
+	store.AddInvitationToPlayer(p.Bin, invitation.Bin, invitation)
+
+	return
+}
+
+func (store *Store) InvitePlayerToGame(playerId string, invitation models.Invitation) (bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// update the player
+	err := store.AddInvitationToPlayer(playerId, invitation.Bin, &invitation)
+	if err != nil {
+		return false, err
+	}
+
+	//  find player
+	p, err := store.GetByBin(playerId, "players")
+	if err != nil {
+		return false, err
+	}
+
+	//  convert
+	plr := p.(models.Player)
+
+	//add the invitation to the player's list of invites
+	err = store.AddInvitationToPlayer(plr.Bin, invitation.Bin, &invitation)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (store *Store) AcceptGameInvitation(playerId string, invitation *models.Invitation) (bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// find game
+	game, err := store.GetByBin(invitation.GameId, "games")
+	if err != nil {
+		return false, err
+	}
+
+	//parse game into a Game struct object
+	g := game.(*models.Game)
+
+	// Add the player to the game's gamers' map
+	g.Gamers[playerId] = &models.Gamer{
+		Bin:         uuid.New().String(),
+		GameId:      invitation.GameId,
+		CharacterId: "3",
+		IsAlive:     true,
+	}
+
+	// update the game
+	err = store.Update(invitation.GameId, map[string]interface{}{
+		"players": g.Gamers,
+	}, "games")
+	if err != nil {
+		return false, err
+	}
+
+	// update the player's invitations' list to include this invitation
+	err = store.Update(playerId, map[string]interface{}{
+		"invitations": []models.Invitation{
+			{
+				Bin:        invitation.Bin,
+				GameGroup:  invitation.GameGroup,
+				CreatorId:  invitation.CreatorId,
+				Status:     "received", // created //received //replied
+				Invitation: "game",
+				Message:    "I'm down!",
+				Time:       "",
+				GameId:     invitation.GameId,
+				Accepted:   true,
+				Declined:   false,
+			},
+		},
+	}, "players")
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (store *Store) DeclineGameInvitation(playerId string, invitation *models.Invitation) (bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// find game
+	game, err := store.GetByBin(invitation.GameId, "games")
+	if err != nil {
+		return false, err
+	}
+
+	//parse game into a Game struct object
+	g := game.(*models.Game)
+
+	// remove the invited players id from the game's invited array
+	for i, m := range g.Invited {
+		if m == playerId {
+			g.Invited = append(g.Invited[:i], g.Invited[i+1:]...)
+			break
+		}
+	}
+
+	// update the game
+	err = store.Update(invitation.GameId, map[string]interface{}{
+		"invited": g.Invited,
+	}, "games")
+	if err != nil {
+		return false, err
+	}
+
+	// update the player's invitations' list to include this invitation
+	err = store.Update(playerId, map[string]interface{}{
+		"invitations": []*models.Invitation{
+			{
+				Bin:        invitation.Bin,
+				GameGroup:  invitation.GameGroup,
+				CreatorId:  invitation.CreatorId,
+				Status:     "received", // created //received //replied
+				Invitation: "game",
+				Message:    "I'm not down!",
+				Time:       "",
+				GameId:     invitation.GameId,
+				Accepted:   false,
+				Declined:   true,
+			},
+		},
+	}, "players")
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (store *Store) AcceptGroupInvitation(p *models.Player, invitationId string, groupId string) (bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// update the invitation record
+	for i, inv := range p.Invitations {
+		if inv.Bin == invitationId {
+			if inv.Accepted {
+				return false, errors.New("invitation already accepted")
+			}
+			if inv.Declined {
+				return false, errors.New("invitation already declined")
+			}
+
+			p.Invitations[i].Accepted = true
+			p.Invitations[i].Status = "accepted"
+
+			m := map[string]interface{}{
+				"accepted": true,
+				"declined": false,
+			}
+
+			store.updateInvitation(p.Bin, invitationId, m)
+			break
+		}
+	}
+
+	// Use a map to check for existing group ID
+	groupIdsMap := make(map[string]bool)
+	for _, id := range p.GroupIds {
+		groupIdsMap[id] = true
+	}
+
+	if !groupIdsMap[groupId] {
+		p.GroupIds = append(p.GroupIds, groupId)
+	}
+
+	//update the player group ids
+	err := store.Update(p.Bin, map[string]interface{}{
+		"group_ids": p.GroupIds,
+	}, "players")
+	if err != nil {
+		return false, err
+	}
+
+	// find game_group
+	gameGroup, err := store.GetByBin(groupId, "game_groups")
+	if err != nil {
+		return false, err
+	}
+
+	// parse game group into a Group struct object
+	g := gameGroup.(*models.Group)
+
+	// add player to the member list
+	err = store.AddPlayerToGroupMembers(groupId, g.Bin, p)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (store *Store) DeclineGameGroupInvitation(p *models.Player, invitationId string, groupId string) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// find the invitation by id
+	for i, inv := range p.Invitations {
+		if inv.Bin == invitationId {
+			p.Invitations[i].Declined = true
+			p.Invitations[i].Accepted = false
+			p.Invitations[i].Status = "declined"
+			break
+		}
+	}
+
+	// update the player
+	err := store.Update(p.Bin, map[string]interface{}{
+		"invitations": p.Invitations,
+	}, "players")
+	if err != nil {
+		return
+	}
+
+	// remove player from group member list if they previously aceepted
+	gameGroup, err := store.GetByBin(groupId, "game_groups")
+	if err != nil {
+		return
+	}
+
+	// parse game group into a Group struct object
+	g := gameGroup.(*models.Group)
+
+	// remove player from the game group's members array
+	for i, m := range g.Members {
+		if m.Bin == p.Bin {
+			g.Members = append(g.Members[:i], g.Members[i+1:]...)
+			break
+		}
+	}
+
+	// update the game group
+	err = store.Update(groupId, map[string]interface{}{
+		"members": g.Members,
+	}, "game_groups")
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (store *Store) RemovePlayerFromGame(playerId string, gameId string) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// find game
+	game, err := store.GetByBin(gameId, "games")
+	if err != nil {
+		return
+	}
+
+	//parse game into a Game struct object
+	g := game.(*models.Game)
+
+	// remove player from the game's invited map
+	for _, m := range g.Gamers {
+		if m.Bin == playerId {
+			delete(g.Gamers, playerId)
+			break
+		}
+	}
+
+	// update the game
+	err = store.Update(gameId, map[string]interface{}{
+		"gamers": g.Gamers,
+	}, "games")
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (store *Store) AddAllStepsToDb(steps []*models.Step, startTime string) []*models.Step {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// order night steps by step index
+	for i := 0; i < len(steps); i++ {
+		steps[i].StepIndex = i
+	}
+
+	var lastEndTime string
+
+	// add night steps
+	for i, s := range steps {
+
+		// set index
+		s.StepIndex = i
+
+		// handle the start and end time for the first step
+		if i == 0 {
+			startTimeMillis, _ := strconv.Atoi(startTime)
+			stepDurationSeconds, _ := strconv.Atoi(s.Duration)
+			var eTime = startTimeMillis + (stepDurationSeconds * 1000) + 500
+			s.StartTime = startTime
+			s.EndTime = strconv.Itoa(eTime)
+			lastEndTime = s.EndTime
+
+			//create each step
+			steps = append(steps, s)
+			err := store.Create(s, "steps")
+			if err != nil {
+				return nil
+			}
+
+			// subsequent steps
+		} else {
+			parsedEndTime, _ := strconv.Atoi(lastEndTime)
+			s.StartTime = strconv.Itoa(parsedEndTime + 500)
+			startTimeMillis, _ := strconv.Atoi(s.StartTime)
+			stepDurationSeconds, _ := strconv.Atoi(s.Duration)
+			var eTime = startTimeMillis + (stepDurationSeconds * 1000) + 500
+			s.EndTime = strconv.Itoa(eTime)
+
+			//create each step
+			steps = append(steps, s)
+			err := store.Create(s, "steps")
+			if err != nil {
+				return nil
+			}
+
+		}
+	}
+
+	return steps
+}
+
+func (store *Store) AddStepsToGame(steps []*models.Step, gameId string) []*models.Step {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	for _, s := range steps {
+		err := store.AddStepToGame(s, gameId)
+		if err != nil {
+			return nil
+		}
+	}
+	return steps
+}
+
+func (store *Store) StartGame(gameId string) (bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	// find game
+	game, err := store.GetByBin(gameId, "games")
+	if err != nil {
+		return false, err
+	}
+
+	//parse game into a Game struct object
+	g := game.(*models.Game)
+
+	// set the game's status to start
+	g.Status = "started"
+
+	// update the game
+	err = store.Update(gameId, map[string]interface{}{
+		"status": g.Status,
+	}, "games")
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (store *Store) EndGame(gameId string) (bool, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	// find game
+	game, err := store.GetByBin(gameId, "games")
+	if err != nil {
+		return false, err
+	}
+
+	//parse game into a Game struct object
+	g := game.(*models.Game)
+
+	// set the game's status to ended
+	g.Status = "ended"
+
+	//send command to agones to kill the server
+
+	//  after the previous step is successful update the game
+	err = store.Update(gameId, map[string]interface{}{
+		"status": g.Status,
+	}, "games")
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
