@@ -754,7 +754,7 @@ func (store *Store) GetStepByBin(step string) (*models.Step, error) {
 	return c, nil
 }
 
-func (store *Store) getCharacterByBin(id string) (*models.Character, error) {
+func (store *Store) GetCharacterByBin(id string) (*models.Character, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	c := &models.Character{}
