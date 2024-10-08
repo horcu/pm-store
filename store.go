@@ -93,9 +93,9 @@ func (store *Store) Create(b interface{}, path string) error {
 	case "steps":
 		return store.CreateStep(b.(*models.Step))
 	case "characters":
-		return store.createCharacter(b.(*models.Character))
+		return store.CreateCharacter(b.(*models.Character))
 	case "abilities":
-		return store.createAbility(b.(*models.Ability))
+		return store.CreateAbility(b.(*models.Ability))
 	default:
 		return fmt.Errorf("invalid data type: %s", path)
 	}
@@ -200,7 +200,7 @@ func (store *Store) Update(b string, m map[string]interface{}, path string) erro
 	case "games":
 		return store.UpdateGame(b, m)
 	case "gamers":
-		return store.updateGamersInGame(b, m)
+		return store.UpdateGamersInGame(b, m)
 	default:
 		return fmt.Errorf("invalid data type: %s", path)
 	}
@@ -403,16 +403,16 @@ func (store *Store) getAllGames() ([]*models.Game, error) {
 		g := v.(map[string]interface{})
 
 		// Convert the "invited" slice
-		invited := store.parsePlayerList(g, "invited")
+		invited := store.ParsePlayerList(g, "invited")
 
 		// Convert the "current step" object
-		step := store.parseCurrentStep(g, "current_step")
+		step := store.ParseCurrentStep(g, "current_step")
 
 		// Convert the group object
-		group := store.parseGroup(g, "game_group")
+		group := store.ParseGroup(g, "game_group")
 
 		// Convert the creator object
-		creator := store.parsePlayer(g, "creator")
+		creator := store.ParsePlayer(g, "creator")
 
 		var invitedList []string
 		for _, player := range invited {
@@ -439,7 +439,7 @@ func (store *Store) getAllGames() ([]*models.Game, error) {
 	return games, nil
 }
 
-func (store *Store) parsePlayerList(pMap map[string]interface{}, path string) []*models.Player {
+func (store *Store) ParsePlayerList(pMap map[string]interface{}, path string) []*models.Player {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var players []*models.Player
@@ -466,7 +466,7 @@ func (store *Store) parsePlayerList(pMap map[string]interface{}, path string) []
 	return players
 }
 
-func (store *Store) parseCurrentStep(pMap interface{}, path string) *models.Step {
+func (store *Store) ParseCurrentStep(pMap interface{}, path string) *models.Step {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var step *models.Step
@@ -489,7 +489,7 @@ func (store *Store) parseCurrentStep(pMap interface{}, path string) *models.Step
 	return step
 }
 
-func (store *Store) parseGroup(pMap interface{}, path string) *models.Group {
+func (store *Store) ParseGroup(pMap interface{}, path string) *models.Group {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var step *models.Group
@@ -498,8 +498,8 @@ func (store *Store) parseGroup(pMap interface{}, path string) *models.Group {
 	interF := playerMap[path].(map[string]interface{})
 	step = &models.Group{
 		Bin:       interF["bin"].(string),
-		Creator:   store.parsePlayer(interF, "creator"),
-		Members:   store.parsePlayerList(interF, "members"),
+		Creator:   store.ParsePlayer(interF, "creator"),
+		Members:   store.ParsePlayerList(interF, "members"),
 		GroupName: interF["group_name"].(string),
 		Capacity:  int(interF["capacity"].(float64)),
 		Status:    interF["status"].(string),
@@ -507,7 +507,7 @@ func (store *Store) parseGroup(pMap interface{}, path string) *models.Group {
 	return step
 }
 
-func (store *Store) parsePlayer(g interface{}, path string) *models.Player {
+func (store *Store) ParsePlayer(g interface{}, path string) *models.Player {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var group *models.Player
@@ -527,7 +527,7 @@ func (store *Store) parsePlayer(g interface{}, path string) *models.Player {
 	return group
 }
 
-func (store *Store) parseInvitationList(pMap map[string]interface{}, path string) ([]*models.Invitation, error) {
+func (store *Store) ParseInvitationList(pMap map[string]interface{}, path string) ([]*models.Invitation, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var accepted []*models.Invitation
@@ -556,7 +556,7 @@ func (store *Store) parseInvitationList(pMap map[string]interface{}, path string
 	return accepted, nil
 }
 
-func (store *Store) getGameGroupMembers(groupId string) ([]*models.Player, error) {
+func (store *Store) GetGameGroupMembers(groupId string) ([]*models.Player, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var m interface{}
@@ -579,7 +579,7 @@ func (store *Store) getGameGroupMembers(groupId string) ([]*models.Player, error
 	return players, nil
 }
 
-func (store *Store) getGameGroupInvitations(groupId string) ([]*models.Invitation, error) {
+func (store *Store) GetGameGroupInvitations(groupId string) ([]*models.Invitation, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var m interface{}
@@ -600,7 +600,7 @@ func (store *Store) getGameGroupInvitations(groupId string) ([]*models.Invitatio
 	return invitations, nil
 }
 
-func (store *Store) getStepsByGameId(gameId string) ([]*models.Step, error) {
+func (store *Store) GetStepsByGameId(gameId string) ([]*models.Step, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var m interface{}
@@ -629,7 +629,7 @@ func (store *Store) getStepsByGameId(gameId string) ([]*models.Step, error) {
 	return steps, nil
 }
 
-func (store *Store) updateInvitation(pId string, inviteId string, m map[string]interface{}) interface{} {
+func (store *Store) UpdateInvitation(pId string, inviteId string, m map[string]interface{}) interface{} {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	err := store.NewRef("players/"+pId+"/invitations/"+inviteId).Update(context.Background(), m)
@@ -641,7 +641,7 @@ func (store *Store) updateInvitation(pId string, inviteId string, m map[string]i
 
 }
 
-func (store *Store) createCharacter(character *models.Character) error {
+func (store *Store) CreateCharacter(character *models.Character) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if err := store.NewRef("characters/"+character.Bin).Set(context.Background(), character); err != nil {
@@ -659,7 +659,7 @@ func (store *Store) AddStepToGame(step *models.Step, id string) error {
 	return nil
 }
 
-func (store *Store) updateGamersInGame(b string, m map[string]interface{}) error {
+func (store *Store) UpdateGamersInGame(b string, m map[string]interface{}) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	err := store.NewRef("games/"+b+"gamers").Update(context.Background(), m)
@@ -687,7 +687,7 @@ func (store *Store) SetGameStartAndEndTimes(gameId string, startTime string, end
 	return nil
 }
 
-func (store *Store) addToGame(path string, bin string, c *models.Character) error {
+func (store *Store) AddToGame(path string, bin string, c *models.Character) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if err := store.NewRef("games/"+bin+"/"+path+"/"+c.Bin).Set(context.Background(), &c); err != nil {
@@ -696,7 +696,7 @@ func (store *Store) addToGame(path string, bin string, c *models.Character) erro
 	return nil
 }
 
-func (store *Store) createAbility(ability *models.Ability) error {
+func (store *Store) CreateAbility(ability *models.Ability) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if err := store.NewRef("abilities/"+ability.Bin).Set(context.Background(), ability); err != nil {
@@ -927,7 +927,7 @@ func (store *Store) AddGamerCharactersToGame(gameId string) ([]*models.Character
 			break
 		}
 		var character = char.(*models.Character)
-		err = store.addToGame("characters", game.Bin, character)
+		err = store.AddToGame("characters", game.Bin, character)
 		charList = append(charList, character)
 		if err != nil {
 			break
@@ -1229,7 +1229,7 @@ func (store *Store) AcceptGroupInvitation(p *models.Player, invitationId string,
 				"declined": false,
 			}
 
-			store.updateInvitation(p.Bin, invitationId, m)
+			store.UpdateInvitation(p.Bin, invitationId, m)
 			break
 		}
 	}
