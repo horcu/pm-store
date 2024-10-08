@@ -21,10 +21,6 @@ type Publisher struct {
 
 var pub Publisher
 
-const (
-	firebaseDBURL = "https://peez-mafia-427718-default-rtdb.firebaseio.com/"
-)
-
 func (db *Publisher) Connect() error {
 	ctx := context.Background()
 
@@ -37,6 +33,11 @@ func (db *Publisher) Connect() error {
 	firebaseConfigFile := os.Getenv("FIREBASE_CONFIG_FILE")
 	if firebaseConfigFile == "" {
 		return fmt.Errorf("FIREBASE_CONFIG_FILE environment variable not set")
+	}
+
+	firebaseDBURL := os.Getenv("FIREBASE_URL")
+	if firebaseConfigFile == "" {
+		return fmt.Errorf("FIREBASE_URL environment variable not set")
 	}
 
 	opt := option.WithCredentialsFile(firebaseConfigFile)
@@ -80,13 +81,13 @@ func NewStore() *Store {
 func (store *Store) Create(b interface{}, path string) error {
 	switch path {
 	case "players":
-		return store.createPlayer(b.(*models.Player))
+		return store.CreatePlayer(b.(*models.Player))
 	case "game_groups":
-		return store.createGameGroup(b.(*models.Group))
+		return store.CreateGameGroup(b.(*models.Group))
 	case "games":
-		return store.createGame(b.(*models.Game))
+		return store.CreateGame(b.(*models.Game))
 	case "steps":
-		return store.createStep(b.(*models.Step))
+		return store.CreateStep(b.(*models.Step))
 	case "characters":
 		return store.createCharacter(b.(*models.Character))
 	case "abilities":
@@ -96,7 +97,7 @@ func (store *Store) Create(b interface{}, path string) error {
 	}
 }
 
-func (store *Store) createStep(b *models.Step) error {
+func (store *Store) CreateStep(b *models.Step) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if err := store.NewRef("steps/"+b.Bin).Set(context.Background(), &b); err != nil {
@@ -105,7 +106,7 @@ func (store *Store) createStep(b *models.Step) error {
 	return nil
 }
 
-func (store *Store) createGame(b *models.Game) error {
+func (store *Store) CreateGame(b *models.Game) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if err := store.NewRef("games/"+b.Bin).Set(context.Background(), b); err != nil {
@@ -114,7 +115,7 @@ func (store *Store) createGame(b *models.Game) error {
 	return nil
 }
 
-func (store *Store) createGameGroup(b *models.Group) error {
+func (store *Store) CreateGameGroup(b *models.Group) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if err := store.NewRef("game_groups/"+b.Bin).Set(context.Background(), b); err != nil {
@@ -123,7 +124,7 @@ func (store *Store) createGameGroup(b *models.Group) error {
 	return nil
 }
 
-func (store *Store) createPlayer(b *models.Player) error {
+func (store *Store) CreatePlayer(b *models.Player) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if err := store.NewRef("players/"+b.Bin).Set(context.Background(), b); err != nil {
@@ -137,29 +138,29 @@ func (store *Store) Delete(b interface{}, dataType string) error {
 	defer store.mu.Unlock()
 	switch dataType {
 	case "players":
-		return store.deletePlayer(b.(*models.Player))
+		return store.DeletePlayer(b.(*models.Player))
 	case "game_groups":
-		return store.deleteGameGroup(b.(*models.Group))
+		return store.DeleteGameGroup(b.(*models.Group))
 	case "games":
-		return store.deleteGame(b.(*models.Game))
+		return store.DeleteGame(b.(*models.Game))
 	default:
 		return fmt.Errorf("invalid data type: %s", dataType)
 	}
 }
 
-func (store *Store) deleteGame(b interface{}) error {
+func (store *Store) DeleteGame(b interface{}) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	return store.NewRef("games/" + b.(*models.Game).Bin).Delete(context.Background())
 }
 
-func (store *Store) deleteGameGroup(b interface{}) error {
+func (store *Store) DeleteGameGroup(b interface{}) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	return store.NewRef("game_groups/" + b.(*models.Group).Bin).Delete(context.Background())
 }
 
-func (store *Store) deletePlayer(b interface{}) error {
+func (store *Store) DeletePlayer(b interface{}) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if b == nil {
@@ -198,11 +199,11 @@ func (store *Store) Update(b string, m map[string]interface{}, path string) erro
 	defer store.mu.Unlock()
 	switch path {
 	case "players":
-		return store.updatePlayer(b, m)
+		return store.UpdatePlayer(b, m)
 	case "game_groups":
-		return store.updateGameGroup(b, m)
+		return store.UpdateGameGroup(b, m)
 	case "games":
-		return store.updateGame(b, m)
+		return store.UpdateGame(b, m)
 	case "gamers":
 		return store.updateGamersInGame(b, m)
 	default:
@@ -210,7 +211,7 @@ func (store *Store) Update(b string, m map[string]interface{}, path string) erro
 	}
 }
 
-func (store *Store) updateGame(b string, m map[string]interface{}) error {
+func (store *Store) UpdateGame(b string, m map[string]interface{}) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if err := store.NewRef("games/"+b).Update(context.Background(), m); err != nil {
@@ -219,7 +220,7 @@ func (store *Store) updateGame(b string, m map[string]interface{}) error {
 	return nil
 }
 
-func (store *Store) updateGameGroup(b string, m map[string]interface{}) error {
+func (store *Store) UpdateGameGroup(b string, m map[string]interface{}) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if err := store.NewRef("game_groups/"+b).Update(context.Background(), m); err != nil {
@@ -228,7 +229,7 @@ func (store *Store) updateGameGroup(b string, m map[string]interface{}) error {
 	return nil
 }
 
-func (store *Store) updatePlayer(b string, m map[string]interface{}) error {
+func (store *Store) UpdatePlayer(b string, m map[string]interface{}) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if err := store.NewRef("players/"+b).Update(context.Background(), m); err != nil {
@@ -237,7 +238,7 @@ func (store *Store) updatePlayer(b string, m map[string]interface{}) error {
 	return nil
 }
 
-func (store *Store) addInvitationToPlayer(playerId string, bin string, m *models.Invitation) error {
+func (store *Store) AddInvitationToPlayer(playerId string, bin string, m *models.Invitation) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	err := store.NewRef("players/"+playerId+"/invitations/"+bin).Set(context.Background(), m)
@@ -248,7 +249,7 @@ func (store *Store) addInvitationToPlayer(playerId string, bin string, m *models
 	return nil
 }
 
-func (store *Store) addPlayerToGroupMembers(gId string, bin string, m *models.Player) error {
+func (store *Store) AddPlayerToGroupMembers(gId string, bin string, m *models.Player) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	err := store.NewRef("game_groups/"+gId+"/members/"+bin).Set(context.Background(), m)
@@ -259,7 +260,7 @@ func (store *Store) addPlayerToGroupMembers(gId string, bin string, m *models.Pl
 	return nil
 }
 
-func (store *Store) addInvitationToGame(gameId string, m map[string]interface{}) error {
+func (store *Store) AddInvitationToGame(gameId string, m map[string]interface{}) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	_, err := store.NewRef("games/"+gameId+"/invitations").Push(context.Background(), m)
@@ -270,7 +271,7 @@ func (store *Store) addInvitationToGame(gameId string, m map[string]interface{})
 	return nil
 }
 
-func (store *Store) getAllPlayers() ([]*models.Player, error) {
+func (store *Store) GetAllPlayers() ([]*models.Player, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	var m interface{}
