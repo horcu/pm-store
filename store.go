@@ -1470,3 +1470,50 @@ func (store *Store) EndGame(gameId string) (bool, error) {
 
 	return true, nil
 }
+
+// Vote vote casts the bot's vote.
+func (store *Store) Vote(gamer *models.Gamer, action *models.Action) bool {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	// get the current step from the game's list of  steps
+	gm, err := store.GetByBin(gamer.GameId, "games")
+	if err != nil {
+		log.Printf("Error getting game data: %v", err)
+		return false
+	}
+
+	game := gm.(models.Game)
+
+	// check if the bot's character is alive
+	if !gamer.IsAlive {
+		log.Printf("Bot %s is dead", gamer.Name)
+		return false
+	}
+
+	// Add the action to the gamer's actions map
+	if gamer.Actions == nil {
+		gamer.Actions = make(map[string][]*models.Action)
+	}
+
+	gamer.Actions[game.CurrentStep] = append(gamer.Actions[game.CurrentStep], action)
+
+	// Update the game data in Firebase with the bot's vote.
+	log.Printf("Bot %s voting", gamer.Name)
+
+	return true
+
+}
+
+func (store *Store) UpdateGamersActions(gamer *models.Gamer) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	// construct interface from game object to save to firebase
+	var gx = map[string]interface{}{
+		gamer.Bin: &gamer,
+	}
+
+	// update the game firebase node
+	store.UpdateGamer(gamer.GameId, gamer.Bin, gx)
+}
