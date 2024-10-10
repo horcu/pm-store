@@ -67,8 +67,6 @@ type Store struct {
 }
 
 func (store *Store) Connect() error {
-	store.mu.Lock()
-	defer store.mu.Unlock()
 	return store.Publisher.Connect()
 }
 
@@ -190,6 +188,7 @@ func (store *Store) GetByBin(b string, dataType string) (interface{}, error) {
 }
 
 func (store *Store) GetGamerByBin(b string, gId string) (*models.Gamer, error) {
+
 	store.mu.Lock()
 	defer store.mu.Unlock()
 
