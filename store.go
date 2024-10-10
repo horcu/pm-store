@@ -1401,7 +1401,7 @@ func (store *Store) Vote(gamer *models.Gamer, action *models.Action) bool {
 		return false
 	}
 
-	game := gm.(models.Game)
+	game := gm.(*models.Game)
 
 	// check if the bot's character is alive
 	if !gamer.IsAlive {
