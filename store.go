@@ -189,6 +189,18 @@ func (store *Store) GetByBin(b string, dataType string) (interface{}, error) {
 	return t, nil
 }
 
+func (store *Store) GetGamerByBin(b string, gId string) (*models.Gamer, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	t := &models.Gamer{}
+	if err := store.NewRef("games/"+gId+"/gamers/"+b).Get(context.Background(), t); err != nil {
+		return nil, err
+	}
+
+	return t, nil
+}
+
 func (store *Store) Update(b string, m map[string]interface{}, path string) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
@@ -1473,6 +1485,7 @@ func (store *Store) EndGame(gameId string) (bool, error) {
 
 // Vote vote casts the bot's vote.
 func (store *Store) Vote(gamer *models.Gamer, action *models.Action) bool {
+
 	store.mu.Lock()
 	defer store.mu.Unlock()
 
