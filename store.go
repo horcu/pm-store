@@ -179,8 +179,8 @@ func (store *Store) GetByBin(b string, dataType string) (interface{}, error) {
 
 func (store *Store) GetGamerByBin(b string, gId string) (*models.Gamer, error) {
 
-	t := &models.Gamer{}
-	if err := store.NewRef("games/"+gId+"/gamers/"+b).Get(context.Background(), t); err != nil {
+	var t *models.Gamer
+	if err := store.NewRef("games/"+gId+"/gamers/"+b).Get(context.Background(), &t); err != nil {
 		return nil, err
 	}
 
