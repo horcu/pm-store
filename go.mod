@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	firebase.google.com/go v3.13.0+incompatible
-	github.com/horcu/mafia-models v0.0.0-20241004193830-53666790f739
+	github.com/horcu/mafia-models v0.0.0-20241030000707-eb7e7d09856a
 	github.com/joho/godotenv v1.5.1
 	google.golang.org/api v0.197.0
 )
