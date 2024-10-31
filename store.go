@@ -7,7 +7,8 @@ import (
 	"firebase.google.com/go/db"
 	"fmt"
 	"github.com/google/uuid"
-	models "github.com/horcu/mafia-models"
+	models "github.com/horcu/mafia-models/types"
+	c "github.com/horcu/mafia-models/types/characters"
 	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
 	"log"
@@ -90,7 +91,7 @@ func (store *Store) Create(b interface{}, path string) error {
 	case "steps":
 		return store.CreateStep(b.(*models.Step))
 	case "characters":
-		return store.CreateCharacter(b.(*models.Character))
+		return store.CreateCharacter(b.(*c.GameCharacter))
 	case "abilities":
 		return store.CreateAbility(b.(*models.Ability))
 	default:
@@ -166,7 +167,7 @@ func (store *Store) GetByBin(b string, dataType string) (interface{}, error) {
 	} else if dataType == "games" {
 		t = &models.Game{}
 	} else if dataType == "characters" {
-		t = &models.Character{}
+		t = &c.GameCharacter{}
 	} else if dataType == "abilities" {
 		t = &models.Ability{}
 	} else {
@@ -327,7 +328,7 @@ func (store *Store) getAllSteps() ([]*models.Step, error) {
 			StepType:     st["step_type"].(string),
 			Duration:     st["duration"].(string),
 			Command:      st["command"].(string),
-			Characters:   st["characters"].(map[string]*models.Character),
+			Characters:   st["characters"].(map[string]*c.GameCharacter),
 			StepIndex:    int(st["step_index"].(float64)),
 			SubSteps:     st["sub_steps"].(map[string]*models.Step),
 			RequiresVote: st["requires_vote"].(bool),
@@ -450,7 +451,7 @@ func (store *Store) ParseCurrentStep(pMap interface{}, path string) *models.Step
 		StepType:     st["step_type"].(string),
 		Duration:     st["duration"].(string),
 		Command:      st["command"].(string),
-		Characters:   st["characters"].(map[string]*models.Character),
+		Characters:   st["characters"].(map[string]*c.GameCharacter),
 		StepIndex:    int(st["step_index"].(float64)),
 		SubSteps:     st["sub_steps"].(map[string]*models.Step),
 		RequiresVote: st["requires_vote"].(bool),
@@ -583,7 +584,7 @@ func (store *Store) GetStepsByGameId(gameId string) ([]*models.Step, error) {
 			StepType:     st["step_type"].(string),
 			Duration:     st["duration"].(string),
 			Command:      st["command"].(string),
-			Characters:   st["characters"].(map[string]*models.Character),
+			Characters:   st["characters"].(map[string]*c.GameCharacter),
 			StepIndex:    int(st["step_index"].(float64)),
 			SubSteps:     st["sub_steps"].(map[string]*models.Step),
 			RequiresVote: st["requires_vote"].(bool),
@@ -605,7 +606,7 @@ func (store *Store) UpdateInvitation(pId string, inviteId string, m map[string]i
 
 }
 
-func (store *Store) CreateCharacter(character *models.Character) error {
+func (store *Store) CreateCharacter(character *c.GameCharacter) error {
 
 	if err := store.NewRef("characters/"+character.Bin).Set(context.Background(), character); err != nil {
 		return err
@@ -646,7 +647,7 @@ func (store *Store) SetGameStartAndEndTimes(gameId string, startTime string, end
 	return nil
 }
 
-func (store *Store) AddToGame(path string, bin string, c *models.Character) error {
+func (store *Store) AddToGame(path string, bin string, c *c.GameCharacter) error {
 	if err := store.NewRef("games/"+bin+"/"+path+"/"+c.Bin).Set(context.Background(), &c); err != nil {
 		return err
 	}
@@ -680,15 +681,6 @@ func (store *Store) ResetFirstDayAndExplanationFlag(bin string) error {
 	return nil
 }
 
-func (store *Store) AddActionToGamer(gameId string, gamerId string, stepId string, a *models.VoteAction) error {
-
-	if err := store.NewRef("games/"+gameId+"/gamers/"+gamerId+"/actions/"+stepId).Set(context.Background(), a); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (store *Store) GetStepByBin(step string) (*models.Step, error) {
 
 	c := &models.Step{}
@@ -701,9 +693,9 @@ func (store *Store) GetStepByBin(step string) (*models.Step, error) {
 	return c, nil
 }
 
-func (store *Store) GetCharacterByBin(id string) (*models.Character, error) {
+func (store *Store) GetCharacterByBin(id string) (*c.GameCharacter, error) {
 
-	c := &models.Character{}
+	c := &c.GameCharacter{}
 	if err := store.NewRef("characters/"+id).Get(context.Background(), c); err != nil {
 		return nil, err
 	}
@@ -744,7 +736,7 @@ func (store *Store) GetAbilitiesForCharacter(characterId string) ([]*models.Abil
 		return nil, err
 	}
 
-	var parsedChar = character.(*models.Character)
+	var parsedChar = character.(*c.GameCharacter)
 	for _, bin := range parsedChar.Abilities {
 		ab, err := store.GetByBin(bin, "abilities")
 		if err != nil {
@@ -842,7 +834,7 @@ func (store *Store) SetNextStep(gameId string) {
 	return
 }
 
-func (store *Store) AddAllCharactersToDb(chars []*models.Character) error {
+func (store *Store) AddAllCharactersToDb(chars []*c.GameCharacter) error {
 
 	for _, s := range chars {
 		//s.Bin = strconv.Itoa(i)
@@ -854,20 +846,20 @@ func (store *Store) AddAllCharactersToDb(chars []*models.Character) error {
 	return nil
 }
 
-func (store *Store) AddGamerCharactersToGame(gameId string) ([]*models.Character, error) {
+func (store *Store) AddGamerCharactersToGame(gameId string) ([]*c.GameCharacter, error) {
 
 	game, err := store.getGameByBin(gameId)
 	if err != nil {
 		return nil, err
 	}
 
-	charList := []*models.Character{}
+	charList := []*c.GameCharacter{}
 	for _, gamer := range game.Gamers {
 		char, err := store.GetByBin(gamer.CharacterId, "characters")
 		if err != nil {
 			break
 		}
-		var character = char.(*models.Character)
+		var character = char.(*c.GameCharacter)
 		err = store.AddToGame("characters", game.Bin, character)
 		charList = append(charList, character)
 		if err != nil {
@@ -1395,12 +1387,12 @@ func (store *Store) EndGame(gameId string) (bool, error) {
 }
 
 // Vote vote casts the bot's vote.
-func (store *Store) Vote(vote *models.VoteAction) bool {
+func (store *Store) Vote(vote *models.Vote) bool {
 
 	// get the gamer using the action's gamerId and gameId
-	gamer, err := store.GetGamerByBin(vote.Vote.VotedBy, vote.GameBin)
+	gamer, err := store.GetGamerByBin(vote.VotedBy, vote.GameBin)
 	if err != nil {
-		log.Printf("Error getting gamer: %+v", vote.Vote.VotedBy)
+		log.Printf("Error getting gamer: %+v", vote.VotedBy)
 	}
 
 	log.Printf("gamer: %+v", gamer)
@@ -1429,7 +1421,7 @@ func (store *Store) Vote(vote *models.VoteAction) bool {
 	log.Printf("updated gamers actions")
 
 	// add vote action to the Results map for that step and the current cycle
-	var mp = addVoteToStepResults(game, gamer, vote)
+	var mp = buildStepResult(game, gamer, vote)
 
 	//update the result in the game
 	store.UpdateGame(game.Bin, mp)
@@ -1443,22 +1435,22 @@ func (store *Store) Vote(vote *models.VoteAction) bool {
 
 }
 
-func addVoteToStepResults(game *models.Game, gamer *models.Gamer, action *models.VoteAction) map[string]interface{} {
+func buildStepResult(game *models.Game, gamer *models.Gamer, action *models.Vote) map[string]interface{} {
 	var stamp = strconv.FormatInt(time.Now().UnixMilli(), 10)
 	res := &models.Result{}
 
 	//ensure there is at least one entry
-	if res = game.Steps[game.CurrentStep].Result[game.Cycles]; res == nil {
+	if res = game.Steps[game.CurrentStep].Result[game.NightCycles]; res == nil {
 		// new entry
-		game.Steps[game.CurrentStep].Result[game.Cycles] = &models.Result{}
+		game.Steps[game.CurrentStep].Result[game.NightCycles] = &models.Result{}
 	}
 
 	//set the step history
-	game.Steps[game.CurrentStep].Result[game.Cycles].StepHistory[gamer.Bin] = &models.StepHistory{
-		Bin:        uuid.New().String(),
-		Stamp:      stamp,
-		StepBin:    action.StepBin,
-		VoteAction: action,
+	game.Steps[game.CurrentStep].Result[game.NightCycles] = &models.Result{
+		Bin:       uuid.New().String(),
+		StepBin:   action.StepBin,
+		TimeStamp: stamp,
+		Vote:      *action,
 	}
 
 	//build update map
