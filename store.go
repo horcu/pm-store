@@ -7,7 +7,7 @@ import (
 	"firebase.google.com/go/db"
 	"fmt"
 	"github.com/google/uuid"
-	models "github.com/horcu/mafia-models/types"
+	models "github.com/horcu/pm-models/types"
 	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
 	"log"
