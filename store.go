@@ -1452,7 +1452,7 @@ func (store *Store) PurgeStepResults(gameId string) error {
 		return err
 	}
 
-	game := g.(models.Game)
+	game := g.(*models.Game)
 
 	for _, step := range game.Steps {
 		// remove all values from the Step's Result property
