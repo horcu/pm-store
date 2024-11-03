@@ -710,7 +710,7 @@ func (store *Store) UpdateVoteStep(gameBin string, stepBin string, updateStep ma
 }
 
 func (store *Store) UpdateGamer(gameId string, gamerId string, gx map[string]interface{}) bool {
-	if err := store.NewRef("games/"+gameId+"/gamers/").Update(context.Background(), gx); err != nil {
+	if err := store.NewRef("games/"+gameId+"/gamers/"+gamerId).Update(context.Background(), gx); err != nil {
 		return false
 	}
 	return true
