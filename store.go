@@ -1390,13 +1390,11 @@ func (store *Store) Vote(vote *models.Vote) bool {
 
 	log.Printf("voting")
 	// get the current step from the game's list of  steps
-	gm, err := store.GetByBin(vote.GameBin, "games")
+	game, err := store.getGameByBin(vote.GameBin)
 	if err != nil {
 		log.Printf("Error getting game data: %v", err)
 		return false
 	}
-
-	game := gm.(*models.Game)
 
 	//store.UpdateGamersActions(gamer)
 	log.Printf("updated gamers actions")
