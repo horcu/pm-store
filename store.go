@@ -1423,7 +1423,10 @@ func (store *Store) Vote(vote *models.Vote) bool {
 	var mp = buildStepResult(game, gamer, vote)
 
 	//update the result in the game
-	store.UpdateGame(game.Bin, mp)
+	err = store.UpdateGame(game.Bin, mp)
+	if err != nil {
+		return false
+	}
 
 	log.Printf("updated game step results")
 
@@ -1456,4 +1459,29 @@ func buildStepResult(game *models.Game, gamer *models.Gamer, action *models.Vote
 	return map[string]interface{}{
 		game.Bin: &game,
 	}
+}
+
+func (store *Store) PurgeStepResults(gameId string) error {
+	// get the game
+	g, err := store.GetByBin(gameId, "games")
+	if err != nil {
+		return err
+	}
+
+	game := g.(models.Game)
+
+	for _, step := range game.Steps {
+		// remove all values from the Step's Result property
+		step.Result = make(map[string][]*models.Result)
+	}
+
+	// save
+	err = store.Update(gameId, map[string]interface{}{
+		"steps": game.Steps,
+	}, "games")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
