@@ -207,7 +207,7 @@ func (store *Store) Update(b string, m map[string]interface{}, path string) erro
 }
 
 func (store *Store) UpdateGame(b string, m map[string]interface{}) error {
-	if err := store.NewRef("games/"+b).Update(context.Background(), m); err != nil {
+	if err := store.NewRef("games/").Update(context.Background(), m); err != nil {
 		return err
 	}
 	return nil
