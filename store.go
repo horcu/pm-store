@@ -1441,7 +1441,7 @@ func buildStepResult(game *models.Game, gamerId string, action *models.Vote) map
 
 	//build update map
 	return map[string]interface{}{
-		game.Bin: &game,
+		"steps/" + game.CurrentStep + "/result/" + gamerId: game.Steps[game.CurrentStep].Result[gamerId],
 	}
 }
 
