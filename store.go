@@ -709,8 +709,8 @@ func (store *Store) UpdateVoteStep(gameBin string, stepBin string, updateStep ma
 	return store.NewRef("games/"+gameBin+"/steps/"+stepBin+"/sub_steps/233fcfa6-bf62-4262-b9c5-823f32e32ef3").Update(context.Background(), updateStep)
 }
 
-func (store *Store) UpdateGamer(gameId string, gamerId string, gx map[string]interface{}) bool {
-	if err := store.NewRef("games/"+gameId+"/gamers/"+gamerId).Update(context.Background(), gx); err != nil {
+func (store *Store) UpdateGamer(gameId string, gx map[string]interface{}) bool {
+	if err := store.NewRef("games/"+gameId+"/gamers/").Update(context.Background(), gx); err != nil {
 		return false
 	}
 	return true
@@ -1388,17 +1388,9 @@ func (store *Store) EndGame(gameId string) (bool, error) {
 // Vote vote casts the bot's vote.
 func (store *Store) Vote(vote *models.Vote) bool {
 
-	// get the gamer using the action's gamerId and gameId
-	gamer, err := store.GetGamerByBin(vote.VotedBy, vote.GameBin)
-	if err != nil {
-		log.Printf("Error getting gamer: %+v", vote.VotedBy)
-	}
-
-	log.Printf("gamer: %+v", gamer)
-
 	log.Printf("voting")
 	// get the current step from the game's list of  steps
-	gm, err := store.GetByBin(gamer.GameId, "games")
+	gm, err := store.GetByBin(vote.GameBin, "games")
 	if err != nil {
 		log.Printf("Error getting game data: %v", err)
 		return false
@@ -1406,38 +1398,26 @@ func (store *Store) Vote(vote *models.Vote) bool {
 
 	game := gm.(*models.Game)
 
-	// check if the bot's character is alive
-	log.Printf("voted")
-	// construct interface from game object to save to firebase
-	var gx = map[string]interface{}{
-		gamer.Bin: &gamer,
-	}
-
-	// update the game firebase node
-	store.UpdateGamer(gamer.GameId, gamer.Bin, gx)
-
 	//store.UpdateGamersActions(gamer)
 	log.Printf("updated gamers actions")
 
 	// add vote action to the Results map for that step and the current cycle
-	var mp = buildStepResult(game, gamer, vote)
+	var mp = buildStepResult(game, vote.Source, vote)
 
+	log.Printf("updating game")
 	//update the result in the game
 	err = store.UpdateGame(game.Bin, mp)
 	if err != nil {
 		return false
 	}
 
-	log.Printf("updated game step results")
-
-	// Update the game data in Firebase with the bot's vote.
-	log.Printf("%s voting", gamer.Name)
-
+	// check if the bot's character is alive
+	log.Printf("voted")
 	return true
 
 }
 
-func buildStepResult(game *models.Game, gamer *models.Gamer, action *models.Vote) map[string]interface{} {
+func buildStepResult(game *models.Game, gamerId string, action *models.Vote) map[string]interface{} {
 	var stamp = strconv.FormatInt(time.Now().UnixMilli(), 10)
 
 	if game.Steps[game.CurrentStep].Result == nil {
@@ -1446,13 +1426,13 @@ func buildStepResult(game *models.Game, gamer *models.Gamer, action *models.Vote
 
 	//ensure there is at least one entry
 
-	if res := game.Steps[game.CurrentStep].Result[gamer.Bin]; res == nil {
+	if res := game.Steps[game.CurrentStep].Result[gamerId]; res == nil {
 		// new entry
-		game.Steps[game.CurrentStep].Result[gamer.Bin] = []*models.Result{}
+		game.Steps[game.CurrentStep].Result[gamerId] = []*models.Result{}
 	}
 
 	//set the step history
-	game.Steps[game.CurrentStep].Result[gamer.Bin] = append(game.Steps[game.CurrentStep].Result[gamer.Bin], &models.Result{
+	game.Steps[game.CurrentStep].Result[gamerId] = append(game.Steps[game.CurrentStep].Result[gamerId], &models.Result{
 		Bin:       uuid.New().String(),
 		StepBin:   action.StepBin,
 		TimeStamp: stamp,
