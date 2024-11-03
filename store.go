@@ -1439,10 +1439,14 @@ func (store *Store) Vote(vote *models.Vote) bool {
 
 func buildStepResult(game *models.Game, gamer *models.Gamer, action *models.Vote) map[string]interface{} {
 	var stamp = strconv.FormatInt(time.Now().UnixMilli(), 10)
-	var res []*models.Result
+
+	if game.Steps[game.CurrentStep].Result == nil {
+		game.Steps[game.CurrentStep].Result = make(map[string][]*models.Result)
+	}
 
 	//ensure there is at least one entry
-	if res = game.Steps[game.CurrentStep].Result[gamer.Bin]; res == nil {
+
+	if res := game.Steps[game.CurrentStep].Result[gamer.Bin]; res == nil {
 		// new entry
 		game.Steps[game.CurrentStep].Result[gamer.Bin] = []*models.Result{}
 	}
