@@ -1436,21 +1436,21 @@ func (store *Store) Vote(vote *models.Vote) bool {
 
 func buildStepResult(game *models.Game, gamer *models.Gamer, action *models.Vote) map[string]interface{} {
 	var stamp = strconv.FormatInt(time.Now().UnixMilli(), 10)
-	res := &models.Result{}
+	var res []*models.Result
 
 	//ensure there is at least one entry
-	if res = game.Steps[game.CurrentStep].Result[game.NightCycles]; res == nil {
+	if res = game.Steps[game.CurrentStep].Result[gamer.Bin]; res == nil {
 		// new entry
-		game.Steps[game.CurrentStep].Result[game.NightCycles] = &models.Result{}
+		game.Steps[game.CurrentStep].Result[gamer.Bin] = []*models.Result{}
 	}
 
 	//set the step history
-	game.Steps[game.CurrentStep].Result[game.NightCycles] = &models.Result{
+	game.Steps[game.CurrentStep].Result[gamer.Bin] = append(game.Steps[game.CurrentStep].Result[gamer.Bin], &models.Result{
 		Bin:       uuid.New().String(),
 		StepBin:   action.StepBin,
 		TimeStamp: stamp,
 		Vote:      *action,
-	}
+	})
 
 	//build update map
 	return map[string]interface{}{
