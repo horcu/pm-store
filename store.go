@@ -1433,6 +1433,8 @@ func buildStepResult(game *models.Game, gamerId string, action *models.Vote) map
 	game.Steps[game.CurrentStep].Result[gamerId] = append(game.Steps[game.CurrentStep].Result[gamerId], &models.Result{
 		Bin:       uuid.New().String(),
 		StepBin:   action.StepBin,
+		GameBin:   game.Bin,
+		GamerId:   gamerId,
 		TimeStamp: stamp,
 		Vote:      *action,
 	})
