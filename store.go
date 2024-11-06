@@ -852,7 +852,7 @@ func (store *Store) AddGamerCharactersToGame(gameId string) ([]*models.GameChara
 		return nil, err
 	}
 
-	charList := []*models.GameCharacter{}
+	var charList []*models.GameCharacter
 	for _, gamer := range game.Gamers {
 		char, err := store.GetByBin(gamer.CharacterId, "characters")
 		if err != nil {
@@ -908,7 +908,7 @@ func (store *Store) CreateGameGroup(groupName string, cap int, ownerId string, u
 	owner, _ := store.GetByBin(ownerId, "players")
 
 	// create a group
-	store.Create(&models.Group{
+	err := store.Create(&models.Group{
 		Bin:       uuid.New().String(),
 		Creator:   owner.(*models.Player),
 		Members:   users,
@@ -916,6 +916,9 @@ func (store *Store) CreateGameGroup(groupName string, cap int, ownerId string, u
 		Capacity:  cap,
 		Status:    "waiting",
 	}, "game_groups")
+	if err != nil {
+		return false, err
+	}
 
 	return true, nil
 
@@ -1385,8 +1388,9 @@ func (store *Store) EndGame(gameId string) (bool, error) {
 	return true, nil
 }
 
-// Vote vote casts the bot's vote.
 func (store *Store) Vote(vote *models.Vote) bool {
+	store.mu.Lock()
+	defer store.mu.Unlock()
 
 	log.Printf("voting")
 	// get the current step from the game's list of  steps
@@ -1396,15 +1400,12 @@ func (store *Store) Vote(vote *models.Vote) bool {
 		return false
 	}
 
-	//store.UpdateGamersActions(gamer)
-	log.Printf("updated gamers actions")
-
 	// add vote action to the Results map for that step and the current cycle
 	var mp = buildStepResult(game, vote.Source, vote)
 
 	log.Printf("updating game")
 	//update the result in the game
-	err = store.UpdateGame(game.Bin, mp)
+	err = store.UpdateGame(game.Bin, *mp)
 	if err != nil {
 		return false
 	}
@@ -1415,7 +1416,7 @@ func (store *Store) Vote(vote *models.Vote) bool {
 
 }
 
-func buildStepResult(game *models.Game, gamerId string, action *models.Vote) map[string]interface{} {
+func buildStepResult(game *models.Game, gamerId string, action *models.Vote) *map[string]interface{} {
 	var stamp = strconv.FormatInt(time.Now().UnixMilli(), 10)
 
 	if game.Steps[game.CurrentStep].Result == nil {
@@ -1423,7 +1424,6 @@ func buildStepResult(game *models.Game, gamerId string, action *models.Vote) map
 	}
 
 	//ensure there is at least one entry
-
 	if res := game.Steps[game.CurrentStep].Result[gamerId]; res == nil {
 		// new entry
 		game.Steps[game.CurrentStep].Result[gamerId] = []*models.Result{}
@@ -1440,7 +1440,7 @@ func buildStepResult(game *models.Game, gamerId string, action *models.Vote) map
 	})
 
 	//build update map
-	return map[string]interface{}{
+	return &map[string]interface{}{
 		"steps/" + game.CurrentStep + "/result/" + gamerId: game.Steps[game.CurrentStep].Result[gamerId],
 	}
 }
