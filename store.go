@@ -727,6 +727,13 @@ func (store *Store) AddAbilitiesToDb(abilities []*models.Ability) error {
 	return nil
 }
 
+func (store *Store) AddAbilitiesToGame(gameId string, abilities []*models.Ability) error {
+	if err := store.NewRef("games/"+gameId+"/abilities").Set(context.Background(), &abilities); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (store *Store) GetAbilitiesForCharacter(characterId string) ([]*models.Ability, error) {
 
 	var abilities []*models.Ability
