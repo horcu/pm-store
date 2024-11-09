@@ -1476,3 +1476,17 @@ func (store *Store) PurgeStepResults(gameId string) error {
 
 	return nil
 }
+
+func (store *Store) ApplyAbility(ability string, gameBin string, targetGamer string) {
+	// construct a models.Fate struct from the ability
+	fate := &models.Fate{
+		Bin:     uuid.New().String(),
+		Ability: ability,
+	}
+
+	// add the fate to the targetGamer
+	err := store.NewRef("games/"+gameBin+"/gamers/"+targetGamer+"/fate").Set(context.Background(), fate)
+	if err != nil {
+		log.Printf("Error adding fate to gamer: %v", err)
+	}
+}
