@@ -1452,7 +1452,7 @@ func buildStepResult(game *models.Game, gamerId string, action *models.Vote) *ma
 	}
 }
 
-func (store *Store) PurgeStepResults(gameId string) error {
+func (store *Store) ArchiveStepResults(gameId string) error {
 	// get the game
 	g, err := store.GetByBin(gameId, "games")
 	if err != nil {
@@ -1462,13 +1462,31 @@ func (store *Store) PurgeStepResults(gameId string) error {
 	game := g.(*models.Game)
 
 	for _, step := range game.Steps {
-		// remove all values from the Step's Result property
-		step.Result = make(map[string][]*models.Result)
+		// check is the step has the result node first
+		if step.Result != nil {
+			// add the step's results to the game's result node with the gamer's bin from the result as the key
+			for _, result := range step.Result {
+				for _, res := range result {
+					if game.StepResults == nil {
+						game.StepResults = make(map[string][]*models.Result)
+					}
+					game.StepResults[res.GamerId] = append(game.StepResults[res.GamerId], res)
+				}
+			}
+			// delete the result node from the step
+			step.Result = nil
+		}
 	}
 
-	// save
+	//then remove all results from all game steps
+	for _, step := range game.Steps {
+		step.Result = nil
+	}
+
+	//publish the changes to the game node
 	err = store.Update(gameId, map[string]interface{}{
-		"steps": game.Steps,
+		"steps":        game.Steps,
+		"step_results": game.StepResults,
 	}, "games")
 	if err != nil {
 		return err
