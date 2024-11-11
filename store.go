@@ -383,7 +383,7 @@ func (store *Store) getAllGames() ([]*models.Game, error) {
 		step := store.ParseCurrentStep(g, "current_step")
 
 		// Convert the group object
-		group := store.ParseGroup(g, "game_group")
+		//group := store.ParseGroup(g, "game_group")
 
 		// Convert the creator object
 		creator := store.ParsePlayer(g, "creator")
@@ -399,15 +399,11 @@ func (store *Store) getAllGames() ([]*models.Game, error) {
 			IsDaytime:         g["is_daytime"].(bool),
 			FirstDayCompleted: g["first_day_completed"].(bool),
 			CurrentStep:       step.Bin,
-			GroupId:           group.Bin,
+			Info:              g["info"].(*models.ServerInfo),
 			Status:            g["status"].(string),
-			ServerName:        g["server_name"].(string),
-			ServerAddress:     g["server_ip"].(string),
-			ServerPort:        int(g["server_port"].(float64)),
 			StartTime:         g["start_time"].(string),
 			EndTime:           g["end_time"].(string),
 			Creator:           creator,
-			Invited:           invitedList,
 		})
 	}
 	return games, nil
@@ -755,35 +751,6 @@ func (store *Store) GetAbilitiesForCharacter(characterId string) ([]*models.Abil
 	return abilities, nil
 }
 
-func (store *Store) AddGamerToGame(gameId string, gamer *models.Gamer) interface{} {
-
-	// find game
-	game, err := store.GetByBin(gameId, "games")
-	if err != nil {
-		return err
-	}
-
-	//parse game into a Game struct object
-	g := game.(*models.Game)
-
-	// Add the player to the game's gamers' map
-	if g.Gamers == nil {
-		g.Gamers = make(map[string]*models.Gamer)
-	}
-
-	g.Gamers[gamer.Bin] = gamer
-
-	// update the game
-	err = store.Update(gameId, map[string]interface{}{
-		"gamers": g.Gamers,
-	}, "games")
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (store *Store) SetNewStep(gameId string) {
 
 	// find game
@@ -850,30 +817,6 @@ func (store *Store) AddAllCharactersToDb(chars []*models.GameCharacter) error {
 		}
 	}
 	return nil
-}
-
-func (store *Store) AddGamerCharactersToGame(gameId string) ([]*models.GameCharacter, error) {
-
-	game, err := store.getGameByBin(gameId)
-	if err != nil {
-		return nil, err
-	}
-
-	var charList []*models.GameCharacter
-	for _, gamer := range game.Gamers {
-		char, err := store.GetByBin(gamer.CharacterId, "characters")
-		if err != nil {
-			break
-		}
-		var character = char.(*models.GameCharacter)
-		err = store.AddToGame("characters", game.Bin, character)
-		charList = append(charList, character)
-		if err != nil {
-			break
-		}
-	}
-
-	return charList, nil
 }
 
 func (store *Store) InitializeGame(game *models.Game) {
@@ -1043,33 +986,8 @@ func (store *Store) InvitePlayerToGame(playerId string, invitation models.Invita
 
 func (store *Store) AcceptGameInvitation(playerId string, invitation *models.Invitation) (bool, error) {
 
-	// find game
-	game, err := store.GetByBin(invitation.GameId, "games")
-	if err != nil {
-		return false, err
-	}
-
-	//parse game into a Game struct object
-	g := game.(*models.Game)
-
-	// Add the player to the game's gamers' map
-	g.Gamers[playerId] = &models.Gamer{
-		Bin:         uuid.New().String(),
-		GameId:      invitation.GameId,
-		CharacterId: "3",
-		IsAlive:     true,
-	}
-
-	// update the game
-	err = store.Update(invitation.GameId, map[string]interface{}{
-		"players": g.Gamers,
-	}, "games")
-	if err != nil {
-		return false, err
-	}
-
 	// update the player's invitations' list to include this invitation
-	err = store.Update(playerId, map[string]interface{}{
+	err := store.Update(playerId, map[string]interface{}{
 		"invitations": []models.Invitation{
 			{
 				Bin:        invitation.Bin,
@@ -1094,33 +1012,8 @@ func (store *Store) AcceptGameInvitation(playerId string, invitation *models.Inv
 
 func (store *Store) DeclineGameInvitation(playerId string, invitation *models.Invitation) (bool, error) {
 
-	// find game
-	game, err := store.GetByBin(invitation.GameId, "games")
-	if err != nil {
-		return false, err
-	}
-
-	//parse game into a Game struct object
-	g := game.(*models.Game)
-
-	// remove the invited players id from the game's invited array
-	for i, m := range g.Invited {
-		if m == playerId {
-			g.Invited = append(g.Invited[:i], g.Invited[i+1:]...)
-			break
-		}
-	}
-
-	// update the game
-	err = store.Update(invitation.GameId, map[string]interface{}{
-		"invited": g.Invited,
-	}, "games")
-	if err != nil {
-		return false, err
-	}
-
 	// update the player's invitations' list to include this invitation
-	err = store.Update(playerId, map[string]interface{}{
+	err := store.Update(playerId, map[string]interface{}{
 		"invitations": []*models.Invitation{
 			{
 				Bin:        invitation.Bin,
@@ -1245,36 +1138,6 @@ func (store *Store) DeclineGameGroupInvitation(p *models.Player, invitationId st
 	err = store.Update(groupId, map[string]interface{}{
 		"members": g.Members,
 	}, "game_groups")
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func (store *Store) RemovePlayerFromGame(playerId string, gameId string) {
-
-	// find game
-	game, err := store.GetByBin(gameId, "games")
-	if err != nil {
-		return
-	}
-
-	//parse game into a Game struct object
-	g := game.(*models.Game)
-
-	// remove player from the game's invited map
-	for _, m := range g.Gamers {
-		if m.Bin == playerId {
-			delete(g.Gamers, playerId)
-			break
-		}
-	}
-
-	// update the game
-	err = store.Update(gameId, map[string]interface{}{
-		"gamers": g.Gamers,
-	}, "games")
 	if err != nil {
 		return
 	}
