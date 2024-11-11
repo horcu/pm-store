@@ -743,8 +743,8 @@ func (store *Store) GetAbilitiesForCharacter(characterId string) ([]*models.Abil
 	}
 
 	var parsedChar = character.(*models.GameCharacter)
-	for _, bin := range parsedChar.Abilities {
-		ab, err := store.GetByBin(bin, "abilities")
+	for _, ability := range parsedChar.Abilities {
+		ab, err := store.GetByBin(ability.Bin, "abilities")
 		if err != nil {
 			break
 		}
@@ -1007,7 +1007,10 @@ func (store *Store) InvitePlayerToGroup(playerId string, invitation *models.Invi
 	p := player.(*models.Player)
 
 	// push invitation to player's invitation list
-	store.AddInvitationToPlayer(p.Bin, invitation.Bin, invitation)
+	err = store.AddInvitationToPlayer(p.Bin, invitation.Bin, invitation)
+	if err != nil {
+		return
+	}
 
 	return
 }
