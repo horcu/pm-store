@@ -714,7 +714,7 @@ func (store *Store) UpdateGamer(gameId string, gx map[string]interface{}) bool {
 	return true
 }
 
-func (store *Store) AddAbilitiesToDb(abilities []*models.Ability) error {
+func (store *Store) AddAbilitiesToDb(abilities map[string]*models.Ability) error {
 
 	for _, a := range abilities {
 		err := store.Create(a, "abilities")
@@ -809,11 +809,23 @@ func (store *Store) SetNextStep(gameId string) {
 	return
 }
 
-func (store *Store) AddAllCharactersToDb(chars []*models.GameCharacter) error {
+func (store *Store) AddAllCharactersToDb(chars map[string]*models.GameCharacter) error {
 
 	for _, s := range chars {
 		//s.Bin = strconv.Itoa(i)
 		err := store.Create(s, "characters")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (store *Store) AddAllStepsToDb(chars map[string]*models.Step) error {
+
+	for _, s := range chars {
+		//s.Bin = strconv.Itoa(i)
+		err := store.Create(s, "steps")
 		if err != nil {
 			return err
 		}
@@ -1149,60 +1161,7 @@ func (store *Store) DeclineGameGroupInvitation(p *models.Player, invitationId st
 	return
 }
 
-func (store *Store) AddAllStepsToDb(steps []*models.Step, startTime string) []*models.Step {
-
-	// order night steps by step index
-	for i := 0; i < len(steps); i++ {
-		steps[i].StepIndex = i
-	}
-
-	var lastEndTime string
-
-	// add night steps
-	for i, s := range steps {
-
-		// set index
-		s.StepIndex = i
-
-		// handle the start and end time for the first step
-		if i == 0 {
-			startTimeMillis, _ := strconv.Atoi(startTime)
-			stepDurationSeconds, _ := strconv.Atoi(s.Duration)
-			var eTime = startTimeMillis + (stepDurationSeconds * 1000) + 500
-			s.StartTime = startTime
-			s.EndTime = strconv.Itoa(eTime)
-			lastEndTime = s.EndTime
-
-			//create each step
-			steps = append(steps, s)
-			err := store.Create(s, "steps")
-			if err != nil {
-				return nil
-			}
-
-			// subsequent steps
-		} else {
-			parsedEndTime, _ := strconv.Atoi(lastEndTime)
-			s.StartTime = strconv.Itoa(parsedEndTime + 500)
-			startTimeMillis, _ := strconv.Atoi(s.StartTime)
-			stepDurationSeconds, _ := strconv.Atoi(s.Duration)
-			var eTime = startTimeMillis + (stepDurationSeconds * 1000) + 500
-			s.EndTime = strconv.Itoa(eTime)
-
-			//create each step
-			steps = append(steps, s)
-			err := store.Create(s, "steps")
-			if err != nil {
-				return nil
-			}
-
-		}
-	}
-
-	return steps
-}
-
-func (store *Store) AddStepsToGame(steps []*models.Step, gameId string) []*models.Step {
+func (store *Store) AddStepsToGame(steps map[string]*models.Step, gameId string) map[string]*models.Step {
 
 	for _, s := range steps {
 		err := store.AddStepToGame(s, gameId)
