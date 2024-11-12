@@ -10,7 +10,7 @@ require (
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/horcu/pm-models v0.0.0-20241111092052-e941df3bf631
+	github.com/horcu/pm-models v0.0.0-20241112075412-16c28d07eb29
 )
 
 require (

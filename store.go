@@ -302,7 +302,7 @@ func (store *Store) getAllGroups() ([]*models.Group, error) {
 		groups = append(groups, &models.Group{
 			Bin:       g["bin"].(string),
 			Creator:   g["creator"].(*models.Player),
-			Members:   g["members"].([]*models.Player),
+			Members:   g["members"].(map[string]*models.Player),
 			GroupName: g["group_name"].(string),
 			Capacity:  int(g["capacity"].(float64)),
 			Status:    g["status"].(string),
@@ -409,28 +409,30 @@ func (store *Store) getAllGames() ([]*models.Game, error) {
 	return games, nil
 }
 
-func (store *Store) ParsePlayerList(pMap map[string]interface{}, path string) []*models.Player {
+func (store *Store) ParsePlayerList(pMap map[string]interface{}, path string) map[string]*models.Player {
 
-	var players []*models.Player
+	var players map[string]*models.Player
 
 	if pMap[path] == nil {
-		return make([]*models.Player, 0)
+		return make(map[string]*models.Player, 0)
 	}
 
 	interF := pMap[path].([]interface{})
 	if len(interF) == 0 {
-		return make([]*models.Player, 0)
+		return make(map[string]*models.Player, 0)
 	}
 
 	for _, playerInterface := range interF {
+
 		playerMap := playerInterface.(map[string]interface{})
-		players = append(players, &models.Player{
+		var p = &models.Player{
 			Bin:      playerMap["bin"].(string),
 			UserName: playerMap["user_name"].(string),
 			Status:   playerMap["status"].(string),
 			Photo:    playerMap["photo"].(string),
 			Privacy:  playerMap["privacy"].(string),
-		})
+		}
+		players[p.Bin] = p
 	}
 	return players
 }
@@ -849,10 +851,11 @@ func (store *Store) AddRandomUsers(userNames []string, photoUrls []string) (bool
 func (store *Store) CreateGameGroup(groupName string, cap int, ownerId string, userIds []string) (bool, error) {
 
 	// find all users and build a user object for each
-	var users []*models.Player
+	var users map[string]*models.Player
 	for _, uId := range userIds {
-		var user, _ = store.GetByBin(uId, "players")
-		users = append(users, user.(*models.Player))
+		var u, _ = store.GetByBin(uId, "players")
+		user := u.(*models.Player)
+		users[user.Bin] = user
 	}
 
 	owner, _ := store.GetByBin(ownerId, "players")
@@ -895,7 +898,7 @@ func (store *Store) AddPlayerToGroup(playerId string, groupId string) {
 	p := player.(*models.Player)
 
 	// add player to the game group's members array
-	g.Members = append(g.Members, p)
+	g.Members[p.Bin] = p
 
 	// update the game group
 	err = store.Update(groupId, map[string]interface{}{
@@ -920,9 +923,10 @@ func (store *Store) RemovePlayerFromGroup(playerId string, groupId string) {
 	g := gameGroup.(*models.Group)
 
 	// remove player from the game group's members array
-	for i, m := range g.Members {
+	for _, m := range g.Members {
 		if m.Bin == playerId {
-			g.Members = append(g.Members[:i], g.Members[i+1:]...)
+			// remove player  m from g.Members
+			delete(g.Members, m.Bin)
 			break
 		}
 	}
@@ -1127,9 +1131,9 @@ func (store *Store) DeclineGameGroupInvitation(p *models.Player, invitationId st
 	g := gameGroup.(*models.Group)
 
 	// remove player from the game group's members array
-	for i, m := range g.Members {
+	for _, m := range g.Members {
 		if m.Bin == p.Bin {
-			g.Members = append(g.Members[:i], g.Members[i+1:]...)
+			delete(g.Members, p.Bin)
 			break
 		}
 	}
