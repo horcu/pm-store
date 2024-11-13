@@ -821,7 +821,10 @@ func (store *Store) AddAllCharactersToDb(chars map[string]*models.GameCharacter)
 	return nil
 }
 func (store *Store) AddAllCharactersToGame(gameId string, chars map[string]*models.GameCharacter) error {
-	if err := store.NewRef("games/"+gameId+"/characters/").Set(context.Background(), &chars); err != nil {
+	var m = map[string]interface{}{
+		"characters": &chars,
+	}
+	if err := store.NewRef("games/"+gameId).Set(context.Background(), &m); err != nil {
 		return err
 	}
 
