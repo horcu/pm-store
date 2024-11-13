@@ -824,7 +824,7 @@ func (store *Store) AddAllCharactersToGame(gameId string, chars map[string]*mode
 	var m = map[string]interface{}{
 		"characters": &chars,
 	}
-	if err := store.NewRef("games/"+gameId).Set(context.Background(), &m); err != nil {
+	if err := store.NewRef("games/"+gameId).Update(context.Background(), m); err != nil {
 		return err
 	}
 
