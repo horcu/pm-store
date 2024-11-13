@@ -820,7 +820,13 @@ func (store *Store) AddAllCharactersToDb(chars map[string]*models.GameCharacter)
 	}
 	return nil
 }
+func (store *Store) AddAllCharactersToGame(gameId string, chars map[string]*models.GameCharacter) error {
+	if err := store.NewRef("games/"+gameId+"/characters/").Set(context.Background(), &chars); err != nil {
+		return err
+	}
 
+	return nil
+}
 func (store *Store) AddAllStepsToDb(chars map[string]*models.Step) error {
 
 	for _, s := range chars {
