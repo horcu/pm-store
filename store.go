@@ -725,7 +725,7 @@ func (store *Store) AddAbilitiesToDb(abilities map[string]*models.Ability) error
 	return nil
 }
 
-func (store *Store) AddAbilitiesToGame(gameId string, abilities []*models.Ability) error {
+func (store *Store) AddAbilitiesToGame(gameId string, abilities map[string]*models.Ability) error {
 	if err := store.NewRef("games/"+gameId+"/abilities").Set(context.Background(), &abilities); err != nil {
 		return err
 	}
