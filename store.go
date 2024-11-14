@@ -704,7 +704,7 @@ func (store *Store) GetCharacterByBin(id string) (*models.GameCharacter, error) 
 
 func (store *Store) UpdateVoteStep(gameBin string, stepBin string, updateStep map[string]interface{}) error {
 
-	return store.NewRef("games/"+gameBin+"/steps/"+stepBin+"/sub_steps/233fcfa6-bf62-4262-b9c5-823f32e32ef3").Update(context.Background(), updateStep)
+	return store.NewRef("games/"+gameBin+"/steps/"+stepBin).Update(context.Background(), updateStep)
 }
 
 func (store *Store) UpdateGamer(gameId string, gx map[string]interface{}) bool {
