@@ -820,6 +820,7 @@ func (store *Store) AddAllCharactersToDb(chars map[string]*models.GameCharacter)
 	}
 	return nil
 }
+
 func (store *Store) AddAllCharactersToGame(gameId string, chars map[string]*models.GameCharacter) error {
 
 	if err := store.NewRef("games/"+gameId+"/characters/").Set(context.Background(), chars); err != nil {
@@ -828,6 +829,7 @@ func (store *Store) AddAllCharactersToGame(gameId string, chars map[string]*mode
 
 	return nil
 }
+
 func (store *Store) AddAllStepsToDb(chars map[string]*models.Step) error {
 
 	for _, s := range chars {
@@ -1343,4 +1345,11 @@ func (store *Store) ApplyAbility(abilityBin string, gameBin string, targetGamer 
 	if err != nil {
 		log.Printf("Error adding fate to gamer: %v", err)
 	}
+}
+
+func (store *Store) AddMessageToGame(msg *models.Message, gameId string) error {
+	if err := store.NewRef("games/"+gameId+"/messages/").Set(context.Background(), msg); err != nil {
+		return err
+	}
+	return nil
 }
