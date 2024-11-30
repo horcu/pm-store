@@ -1269,10 +1269,10 @@ func buildStepResult(game *models.Game, gamerId string, action *models.Vote) *ma
 	}
 
 	//ensure there is at least one entry
-	if res := game.Steps[game.CurrentStep].Result[gamerId]; res == nil {
-		// new entry
-		game.Steps[game.CurrentStep].Result[gamerId] = []*models.Result{}
-	}
+	//if res := game.Steps[game.CurrentStep].Result[gamerId]; res == nil {
+	//	// new entry
+	//	game.Steps[game.CurrentStep].Result[gamerId] = []*models.Result{}
+	//}
 
 	//set the step history
 	game.Steps[game.CurrentStep].Result[gamerId] = append(game.Steps[game.CurrentStep].Result[gamerId], &models.Result{
@@ -1299,20 +1299,20 @@ func (store *Store) ArchiveStepResults(gameId string) error {
 
 	game := g.(*models.Game)
 
+	if game.StepResults == nil {
+		game.StepResults = make(map[string][]*models.Result)
+	}
+
 	for _, step := range game.Steps {
 		// check is the step has the result node first
 		if step.Result != nil {
 			// add the step's results to the game's result node with the gamer's bin from the result as the key
 			for _, result := range step.Result {
 				for _, res := range result {
-					if game.StepResults == nil {
-						game.StepResults = make(map[string][]*models.Result)
-					}
-					game.StepResults[res.GamerId] = append(game.StepResults[res.GamerId], res)
+					var r = game.StepResults[res.GamerId]
+					r = append(r, res)
 				}
 			}
-			// delete the result node from the step
-			step.Result = nil
 		}
 	}
 
