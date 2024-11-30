@@ -1353,3 +1353,12 @@ func (store *Store) AddMessageToGame(msg *models.Message, gameId string) error {
 	}
 	return nil
 }
+
+func (store *Store) GetPlayerToken(bin string) (string, error) {
+
+	var token string
+	if err := store.NewRef("players/"+bin+"/token").Get(context.Background(), &token); err != nil {
+		return "", err
+	}
+	return token, nil
+}
