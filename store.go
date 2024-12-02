@@ -714,6 +714,13 @@ func (store *Store) UpdateGamer(gameId string, gx map[string]interface{}) bool {
 	return true
 }
 
+func (store *Store) UpdateGamerAbilities(gameId string, gamerId string, gx map[string]interface{}) bool {
+	if err := store.NewRef("games/"+gameId+"/gamers/"+gamerId+"/abilities/").Update(context.Background(), gx); err != nil {
+		return false
+	}
+	return true
+}
+
 func (store *Store) AddAbilitiesToDb(abilities map[string]*models.Ability) error {
 
 	for _, a := range abilities {
