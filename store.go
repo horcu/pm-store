@@ -690,7 +690,7 @@ func (store *Store) GetStepByBin(step string) (*models.Step, error) {
 	return c, nil
 }
 
-func (store *Store) GetCharacterByBin(id string) (*interface{}, error) {
+func (store *Store) GetCharacterByBin(id string) (*models.GameCharacter, error) {
 
 	c := &models.GameCharacter{}
 	if err := store.NewRef("characters/"+id).Get(context.Background(), c); err != nil {
@@ -700,32 +700,7 @@ func (store *Store) GetCharacterByBin(id string) (*interface{}, error) {
 		return nil, nil
 	}
 
-	concrete := getConcreteType(c)
-	return &concrete, nil
-}
-
-func getConcreteType(c *models.GameCharacter) interface{} {
-	switch c.TypeId {
-	case 0:
-		return &models.VillainCharacter{
-			GameCharacter: *c,
-		}
-	case 1:
-		return &models.InnocentCharacter{
-			GameCharacter: *c,
-		}
-	case 3:
-		return &models.HybridCharacter{
-			GameCharacter: *c,
-		}
-	default:
-		return &models.GameCharacter{
-			Bin:       c.Bin,
-			Name:      c.Name,
-			TypeId:    c.TypeId,
-			Abilities: c.Abilities,
-		}
-	}
+	return c, nil
 }
 
 func (store *Store) UpdateVoteStep(gameBin string, stepBin string, updateStep map[string]interface{}) error {
