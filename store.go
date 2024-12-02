@@ -714,8 +714,8 @@ func (store *Store) UpdateGamer(gameId string, gx map[string]interface{}) bool {
 	return true
 }
 
-func (store *Store) UpdateGamerAbilities(gameId string, gamerId string, gx map[string]interface{}) bool {
-	if err := store.NewRef("games/"+gameId+"/gamers/"+gamerId+"/abilities/").Update(context.Background(), gx); err != nil {
+func (store *Store) UpdateGamerAbilities(gameId string, gamerId string, abBin string, ab *models.Ability) bool {
+	if err := store.NewRef("games/"+gameId+"/gamers/"+gamerId+"/abilities/"+abBin).Set(context.Background(), ab); err != nil {
 		return false
 	}
 	return true
