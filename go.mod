@@ -1,6 +1,6 @@
 module github.com/horcu/pm-store
 
-go 1.23
+go 1.23.2
 
 require (
 	firebase.google.com/go v3.13.0+incompatible
@@ -10,7 +10,7 @@ require (
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/horcu/pm-models v0.0.0-20241128021645-75aad2a6a2cb
+	github.com/horcu/pm-models v0.0.0-20241130134740-ad87051cb6a4
 )
 
 require (

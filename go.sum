@@ -99,12 +99,8 @@ github.com/googleapis/enterprise-certificate-proxy v0.3.4 h1:XYIDZApgAnrN1c855gT
 github.com/googleapis/enterprise-certificate-proxy v0.3.4/go.mod h1:YKe7cfqYXjKGpGvmSg28/fFvhNzinZQm8DGnaburhGA=
 github.com/googleapis/gax-go/v2 v2.13.0 h1:yitjD5f7jQHhyDsnhKEBU52NdvvdSeGzlAnDPT0hH1s=
 github.com/googleapis/gax-go/v2 v2.13.0/go.mod h1:Z/fvTZXF8/uw7Xu5GuslPw+bplx6SS338j1Is2S+B7A=
-github.com/horcu/pm-models v0.0.0-20241114025419-a2f5cb4bfa76 h1:WkCeTQh+k6t18subDvQEafywnz8iSxihPGOOV/fGK6s=
-github.com/horcu/pm-models v0.0.0-20241114025419-a2f5cb4bfa76/go.mod h1:raAJ/SXco8cBZcmj1Hmp6I0SSlNCkLOYPQ325ZIhuWM=
-github.com/horcu/pm-models v0.0.0-20241123023314-9c8f8bf29ff1 h1:L3WyCCc6g9Pw3Fq4HU3o0TNURgWLpw+ILfCLPZvsxy8=
-github.com/horcu/pm-models v0.0.0-20241123023314-9c8f8bf29ff1/go.mod h1:oGBgHVh9IPvvNulqrHqDZaAj4SRHGZSvO5Q+5AefMNM=
-github.com/horcu/pm-models v0.0.0-20241128021645-75aad2a6a2cb h1:vQWvrTRkJF++6d3TLTwLoN0GxvXd4VVEj+vc1+Eaha4=
-github.com/horcu/pm-models v0.0.0-20241128021645-75aad2a6a2cb/go.mod h1:oGBgHVh9IPvvNulqrHqDZaAj4SRHGZSvO5Q+5AefMNM=
+github.com/horcu/pm-models v0.0.0-20241130134740-ad87051cb6a4 h1:QZYRZ1yDk+5tPuFj+02cCqrr7CXNik5h/DWKl7RPmJ4=
+github.com/horcu/pm-models v0.0.0-20241130134740-ad87051cb6a4/go.mod h1:oGBgHVh9IPvvNulqrHqDZaAj4SRHGZSvO5Q+5AefMNM=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 h1:GFCKgmp0tecUJ0sJuv4pzYCqS9+RGSn52M3FUwPs+uo=
