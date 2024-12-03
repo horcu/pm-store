@@ -703,6 +703,14 @@ func (store *Store) GetCharacterByBin(id string) (*models.GameCharacter, error) 
 	return c, nil
 }
 
+func (store *Store) IncrementGameCounter(game *models.Game, val int) error {
+	// increment the game.counter value in firebase
+	if err := store.NewRef("game/"+game.Bin+"/counter").Set(context.Background(), &val); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (store *Store) UpdateVoteStep(gameBin string, stepBin string, updateStep map[string]interface{}) error {
 
 	return store.NewRef("games/"+gameBin+"/steps/"+stepBin).Update(context.Background(), updateStep)
