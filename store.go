@@ -1364,10 +1364,8 @@ func (store *Store) ApplyAbility(abilityBin string, gameBin string, targetGamer 
 }
 
 func (store *Store) AddMessageToGame(msg *models.Message, gameId string) error {
-	var mp = &map[string]interface{}{
-		msg.Timestamp: msg,
-	}
-	if err := store.NewRef("games/"+gameId+"/messages/").Set(context.Background(), mp); err != nil {
+
+	if err := store.NewRef("games/"+gameId+"/messages/"+msg.Timestamp).Set(context.Background(), msg); err != nil {
 		return err
 	}
 	return nil
