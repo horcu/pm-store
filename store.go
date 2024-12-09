@@ -395,15 +395,19 @@ func (store *Store) getAllGames() ([]*models.Game, error) {
 
 		// add parsed Game to list
 		games = append(games, &models.Game{
-			Bin:               g["bin"].(string),
-			IsDaytime:         g["is_daytime"].(bool),
-			FirstDayCompleted: g["first_day_completed"].(bool),
-			CurrentStep:       step.Bin,
-			Info:              g["info"].(*models.ServerInfo),
-			Status:            g["status"].(string),
-			StartTime:         g["start_time"].(string),
-			EndTime:           g["end_time"].(string),
-			Creator:           creator,
+			Bin: g["bin"].(string),
+			GameEvents: models.Events{
+				IsDaytime:         g["is_daytime"].(bool),
+				FirstDayCompleted: g["first_day_completed"].(bool),
+			},
+			CurrentStep: step.Bin,
+			Info:        g["info"].(*models.ServerInfo),
+			Status:      g["status"].(string),
+			Sync: &models.TimeSync{
+				StartTime: g["start_time"].(string),
+				EndTime:   g["end_time"].(string),
+			},
+			Creator: creator,
 		})
 	}
 	return games, nil

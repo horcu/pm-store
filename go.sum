@@ -105,6 +105,10 @@ github.com/horcu/pm-models v0.0.0-20241202201802-dcd4d040832b h1:kRkeaJnCuuThIxf
 github.com/horcu/pm-models v0.0.0-20241202201802-dcd4d040832b/go.mod h1:oGBgHVh9IPvvNulqrHqDZaAj4SRHGZSvO5Q+5AefMNM=
 github.com/horcu/pm-models v0.0.0-20241204145326-4222a19159f2 h1:wpFoNSdySsRVdNc3k9b+a604UPFhqc8c6GVvjz5iwj0=
 github.com/horcu/pm-models v0.0.0-20241204145326-4222a19159f2/go.mod h1:oGBgHVh9IPvvNulqrHqDZaAj4SRHGZSvO5Q+5AefMNM=
+github.com/horcu/pm-models v0.0.0-20241204174105-aee7697a2203 h1:eRfriKHGOmoNWDnJFvcEvHvBr21ZMaQp7H7gsU2H86E=
+github.com/horcu/pm-models v0.0.0-20241204174105-aee7697a2203/go.mod h1:oGBgHVh9IPvvNulqrHqDZaAj4SRHGZSvO5Q+5AefMNM=
+github.com/horcu/pm-models v0.0.0-20241209194023-2bd85d45c253 h1:g5JxdhoLfiblFcyDJGSYAjnK0+59RcY22KQlNL4fmlM=
+github.com/horcu/pm-models v0.0.0-20241209194023-2bd85d45c253/go.mod h1:oGBgHVh9IPvvNulqrHqDZaAj4SRHGZSvO5Q+5AefMNM=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 h1:GFCKgmp0tecUJ0sJuv4pzYCqS9+RGSn52M3FUwPs+uo=
