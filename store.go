@@ -1329,16 +1329,10 @@ func (store *Store) ArchiveStepResults(gameId string) error {
 			// add the step's results to the game's result node with the gamer's bin from the result as the key
 			for _, result := range step.Result {
 				for _, res := range result {
-					var r = game.StepResults[res.GamerId]
-					r = append(r, res)
+					game.StepResults[res.GamerId] = append(game.StepResults[res.GamerId], res)
 				}
 			}
 		}
-	}
-
-	//then remove all results from all game steps
-	for _, step := range game.Steps {
-		step.Result = nil
 	}
 
 	//publish the changes to the game node

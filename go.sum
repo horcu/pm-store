@@ -113,6 +113,8 @@ github.com/horcu/pm-models v0.0.0-20241211012936-6f01b958d7e0 h1:ghrKmRNjBp5rgfR
 github.com/horcu/pm-models v0.0.0-20241211012936-6f01b958d7e0/go.mod h1:oGBgHVh9IPvvNulqrHqDZaAj4SRHGZSvO5Q+5AefMNM=
 github.com/horcu/pm-models v0.0.0-20241211013221-7491125d1129 h1:N68ic7f0C0U6LO3TxjWPQzt7Nrh1zi2X73/R6VL+0Ko=
 github.com/horcu/pm-models v0.0.0-20241211013221-7491125d1129/go.mod h1:oGBgHVh9IPvvNulqrHqDZaAj4SRHGZSvO5Q+5AefMNM=
+github.com/horcu/pm-models v0.0.0-20241212232703-3693a7c75a8f h1:ck7kiymP8thZhQwEGxXiXULzmHDTSkMC54xuvdjnIow=
+github.com/horcu/pm-models v0.0.0-20241212232703-3693a7c75a8f/go.mod h1:oGBgHVh9IPvvNulqrHqDZaAj4SRHGZSvO5Q+5AefMNM=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 h1:GFCKgmp0tecUJ0sJuv4pzYCqS9+RGSn52M3FUwPs+uo=
