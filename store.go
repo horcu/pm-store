@@ -31,7 +31,7 @@ func (db *Publisher) Connect() error {
 
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env file : store")
 	}
 
 	// Get Firebase config from environment variables
