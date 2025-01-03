@@ -11,7 +11,6 @@ import (
 	"google.golang.org/api/option"
 	"log"
 	"math/rand"
-	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -29,12 +28,12 @@ func (db *Publisher) Connect() error {
 	ctx := context.Background()
 
 	// Get Firebase config from environment variables
-	firebaseConfigFile := os.Getenv("FIREBASE_CONFIG_FILE")
+	firebaseConfigFile := "assets/json/s_key.json" //os.Getenv("FIREBASE_CONFIG_FILE")
 	if firebaseConfigFile == "" {
 		return fmt.Errorf("FIREBASE_CONFIG_FILE environment variable not set")
 	}
 
-	firebaseDBURL := os.Getenv("FIREBASE_URL")
+	firebaseDBURL := "https://peezmafia-521be-default-rtdb.firebaseio.com" // os.Getenv("FIREBASE_URL")
 	if firebaseConfigFile == "" {
 		return fmt.Errorf("FIREBASE_URL environment variable not set")
 	}
