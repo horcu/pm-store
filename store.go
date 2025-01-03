@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	models "github.com/horcu/pm-models/types"
-	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
 	"log"
 	"math/rand"
@@ -28,11 +27,6 @@ var pub Publisher
 
 func (db *Publisher) Connect() error {
 	ctx := context.Background()
-
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file : store")
-	}
 
 	// Get Firebase config from environment variables
 	firebaseConfigFile := os.Getenv("FIREBASE_CONFIG_FILE")
@@ -74,11 +68,9 @@ func (store *Store) Connect() error {
 // NewStore returns a Store.
 func NewStore() *Store {
 	d := FirebaseDB()
-	st := &Store{
+	return &Store{
 		Publisher: d,
 	}
-
-	return st
 }
 
 func (store *Store) Create(b interface{}, path string) error {
@@ -97,7 +89,6 @@ func (store *Store) Create(b interface{}, path string) error {
 		return fmt.Errorf("invalid data type: %s", path)
 	}
 }
-
 func (store *Store) CreateStep(b *models.Step) error {
 	store.mu.Lock()
 	if err := store.NewRef("steps/"+b.Bin).Set(context.Background(), &b); err != nil {
@@ -106,7 +97,6 @@ func (store *Store) CreateStep(b *models.Step) error {
 	store.mu.Unlock()
 	return nil
 }
-
 func (store *Store) CreateGame(b *models.Game) error {
 	store.mu.Lock()
 	if err := store.NewRef("games/"+b.Bin).Set(context.Background(), b); err != nil {
@@ -115,7 +105,6 @@ func (store *Store) CreateGame(b *models.Game) error {
 	store.mu.Unlock()
 	return nil
 }
-
 func (store *Store) CreatePlayer(b *models.Player) error {
 
 	if err := store.NewRef("players/"+b.Bin).Set(context.Background(), b); err != nil {
@@ -137,17 +126,14 @@ func (store *Store) Delete(b interface{}, dataType string) error {
 		return fmt.Errorf("invalid data type: %s", dataType)
 	}
 }
-
 func (store *Store) DeleteGame(b interface{}) error {
 
 	return store.NewRef("games/" + b.(*models.Game).Bin).Delete(context.Background())
 }
-
 func (store *Store) DeleteGameGroup(b interface{}) error {
 
 	return store.NewRef("game_groups/" + b.(*models.Group).Bin).Delete(context.Background())
 }
-
 func (store *Store) DeletePlayer(b interface{}) error {
 
 	if b == nil {
@@ -155,7 +141,6 @@ func (store *Store) DeletePlayer(b interface{}) error {
 	}
 	return store.NewRef("players/" + b.(*models.Player).Bin).Delete(context.Background())
 }
-
 func (store *Store) GetByBin(b string, dataType string) (interface{}, error) {
 
 	var t interface{}
@@ -179,7 +164,6 @@ func (store *Store) GetByBin(b string, dataType string) (interface{}, error) {
 
 	return t, nil
 }
-
 func (store *Store) GetGamerByBin(b string, gId string) (*models.Gamer, error) {
 
 	var t *models.Gamer
