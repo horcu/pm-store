@@ -34,7 +34,7 @@ func (db *Publisher) Connect(firebaseUrl string, firebaseConfigFile string) erro
 	}
 	client, err := app.Database(ctx)
 	if err != nil {
-		return fmt.Errorf("error initializing database: %v", err)
+		return fmt.Errorf("error initializing fb database: %v", err)
 	}
 	db.Client = client
 	return nil
