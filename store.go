@@ -26,7 +26,7 @@ var pub Publisher
 
 func (db *Publisher) Connect(firebaseUrl string, firebaseConfigFile string) error {
 	ctx := context.Background()
-	opt := option.WithCredentialsFile(firebaseConfigFile)
+	opt := option.WithoutAuthentication()
 	config := &firebase.Config{DatabaseURL: firebaseUrl}
 	app, err := firebase.NewApp(ctx, config, opt)
 	if err != nil {
