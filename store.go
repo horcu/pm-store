@@ -28,7 +28,7 @@ func (db *Publisher) Connect() error {
 	ctx := context.Background()
 
 	// Get Firebase config from environment variables
-	firebaseConfigFile := "assets/json/s_key.json" //os.Getenv("FIREBASE_CONFIG_FILE")
+	firebaseConfigFile := "./assets/json/s_key.json" //os.Getenv("FIREBASE_CONFIG_FILE")
 	if firebaseConfigFile == "" {
 		return fmt.Errorf("FIREBASE_CONFIG_FILE environment variable not set")
 	}
