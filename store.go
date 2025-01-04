@@ -3,12 +3,12 @@ package v1
 import (
 	"context"
 	"errors"
-	//firebase "firebase.google.com/go"
+	firebase "firebase.google.com/go"
 	"firebase.google.com/go/db"
 	"fmt"
 	"github.com/google/uuid"
 	models "github.com/horcu/pm-models/types"
-	//"google.golang.org/api/option"
+	"google.golang.org/api/option"
 	"log"
 	"math/rand"
 	"strconv"
@@ -24,31 +24,19 @@ type Publisher struct {
 
 var pub Publisher
 
-func (db *Publisher) Connect() error {
-	//ctx := context.Background()
-
-	// Get Firebase config from environment variables
-	//firebaseConfigFile := "./assets/json/s_key.json" //os.Getenv("FIREBASE_CONFIG_FILE")
-	//if firebaseConfigFile == "" {
-	//	return fmt.Errorf("FIREBASE_CONFIG_FILE environment variable not set")
-	//}
-
-	firebaseDBURL := "https://peezmafia-521be-default-rtdb.firebaseio.com" // os.Getenv("FIREBASE_URL")
-	if firebaseDBURL == "" {
-		return fmt.Errorf("FIREBASE_URL environment variable not set")
+func (db *Publisher) Connect(firebaseUrl string, firebaseConfigFile string) error {
+	ctx := context.Background()
+	opt := option.WithCredentialsFile(firebaseConfigFile)
+	config := &firebase.Config{DatabaseURL: firebaseUrl}
+	app, err := firebase.NewApp(ctx, config, opt)
+	if err != nil {
+		return fmt.Errorf("error initializing app: %v", err)
 	}
-
-	//opt := option.WithCredentialsFile("firebaseConfigFile")
-	//config := &firebase.Config{DatabaseURL: firebaseDBURL}
-	//app, err := firebase.NewApp(ctx, config, opt)
-	//if err != nil {
-	//	return fmt.Errorf("error initializing app: %v", err)
-	//}
-	//client, err := app.Database(ctx)
-	//if err != nil {
-	//	return fmt.Errorf("error initializing database: %v", err)
-	//}
-	//db.Client = client
+	client, err := app.Database(ctx)
+	if err != nil {
+		return fmt.Errorf("error initializing database: %v", err)
+	}
+	db.Client = client
 	return nil
 }
 
@@ -60,8 +48,8 @@ type Store struct {
 	*Publisher
 }
 
-func (store *Store) Connect() error {
-	return store.Publisher.Connect()
+func (store *Store) Connect(firebaseUrl string, firebaseConfigFile string) error {
+	return store.Publisher.Connect(firebaseUrl, firebaseConfigFile)
 }
 
 // NewStore returns a Store.
