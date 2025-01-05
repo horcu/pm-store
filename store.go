@@ -24,10 +24,10 @@ type Publisher struct {
 
 var pub Publisher
 
-func (db *Publisher) Connect(firebaseUrl string, firebaseConfigFile string) error {
+func (db *Publisher) Connect() error {
 	ctx := context.Background()
 	opt := option.WithoutAuthentication()
-	config := &firebase.Config{DatabaseURL: firebaseUrl}
+	config := &firebase.Config{DatabaseURL: "https://peezmafia-521be-default-rtdb.firebaseio.com"}
 	app, err := firebase.NewApp(ctx, config, opt)
 	if err != nil {
 		return fmt.Errorf("error initializing app: %v", err)
@@ -48,8 +48,8 @@ type Store struct {
 	*Publisher
 }
 
-func (store *Store) Connect(firebaseUrl string, firebaseConfigFile string) error {
-	return store.Publisher.Connect(firebaseUrl, firebaseConfigFile)
+func (store *Store) Connect() error {
+	return store.Publisher.Connect()
 }
 
 // NewStore returns a Store.
