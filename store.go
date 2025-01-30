@@ -36,9 +36,9 @@ var pub Publisher
 func init() {
 
 	// Construct the path to the secret file
-	firebaseURLPath := path.Join("/etc/secrets", "firebase_url") // Match file name in secret
-	projectIDPath := path.Join("/etc/secrets", "project_id")
-	firebaseAPIKeyPath := path.Join("/etc/secrets", "firebase_api_key")
+	firebaseURLPath := path.Join("../etc/secrets", "firebase_url") // Match file name in secret
+	projectIDPath := path.Join("../etc/secrets", "project_id")
+	firebaseAPIKeyPath := path.Join("../etc/secrets", "firebase_api_key")
 
 	// Read the secret data from the files
 	firebaseURLBytes, err := os.ReadFile(firebaseURLPath)
