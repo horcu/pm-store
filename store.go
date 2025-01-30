@@ -9,13 +9,8 @@ import (
 	"github.com/google/uuid"
 	models "github.com/horcu/pm-models/types"
 	"google.golang.org/api/option"
-	"io/ioutil"
 	"log"
 	"math/rand"
-	"os"
-	"path"
-	"path/filepath"
-	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -36,51 +31,10 @@ var (
 
 var pub Publisher
 
-func init() {
-	_, b, _, _ := runtime.Caller(0)
-	basePath := filepath.Dir(b)
-
-	// Construct the path to the secret file
-	firebaseURLPath := path.Join(basePath, "/etc/secrets", "firebase_url") // Match file name in secret
-	projectIDPath := path.Join(basePath, "/etc/secrets", "project_id")
-	firebaseAPIKeyPath := path.Join(basePath, "/etc/secrets", "firebase_api_key")
-
-	// print the current  root file path
-	fmt.Printf("current root path: %v", basePath)
-
-	files, err := ioutil.ReadDir(basePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, file := range files {
-		fmt.Println(file.Name())
-	}
-
-	// Read the secret data from the files
-	firebaseURLBytes, err := os.ReadFile(firebaseURLPath)
-	if err != nil {
-		panic(fmt.Errorf("failed to read firebase_url: %w", err))
-	}
-	projectIDBytes, err := os.ReadFile(projectIDPath)
-	if err != nil {
-		panic(fmt.Errorf("failed to read project_id: %w", err))
-	}
-	firebaseAPIKeyBytes, err := os.ReadFile(firebaseAPIKeyPath)
-	if err != nil {
-		panic(fmt.Errorf("failed to read firebase_api_key: %w", err))
-	}
-
-	firebaseURL = string(firebaseURLBytes)
-	projectID = string(projectIDBytes)
-	firebaseAPIKey = string(firebaseAPIKeyBytes)
+func (db *Publisher) Connect(firebaseURL string, firebaseAPIKey string, projectID string) error {
 	opt = option.WithCredentialsJSON([]byte(firebaseAPIKey))
-
-}
-
-func (db *Publisher) Connect() error {
 	ctx := context.Background()
-	config := &firebase.Config{DatabaseURL: firebaseURL}
+	config := &firebase.Config{DatabaseURL: firebaseURL, ProjectID: projectID}
 	app, err := firebase.NewApp(ctx, config, opt)
 	if err != nil {
 		return fmt.Errorf("error initializing app: %v", err)
@@ -101,8 +55,8 @@ type Store struct {
 	*Publisher
 }
 
-func (store *Store) Connect() error {
-	return store.Publisher.Connect()
+func (store *Store) Connect(firebaseURL string, firebaseAPIKey string, projectID string) error {
+	return store.Publisher.Connect(firebaseURL, firebaseAPIKey, projectID)
 }
 
 // NewStore returns a Store.
