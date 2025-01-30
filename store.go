@@ -11,6 +11,8 @@ import (
 	"google.golang.org/api/option"
 	"log"
 	"math/rand"
+	"os"
+	"path"
 	"strconv"
 	"sync"
 	"time"
@@ -22,12 +24,46 @@ type Publisher struct {
 	mu sync.Mutex
 }
 
+var (
+	firebaseURL    string
+	projectID      string
+	firebaseAPIKey string
+	opt            option.ClientOption
+)
+
 var pub Publisher
+
+func init() {
+
+	// Construct the path to the secret file
+	firebaseURLPath := path.Join("/etc/secrets", "firebase_url") // Match file name in secret
+	projectIDPath := path.Join("/etc/secrets", "project_id")
+	firebaseAPIKeyPath := path.Join("/etc/secrets", "firebase_api_key")
+
+	// Read the secret data from the files
+	firebaseURLBytes, err := os.ReadFile(firebaseURLPath)
+	if err != nil {
+		panic(fmt.Errorf("failed to read firebase_url: %w", err))
+	}
+	projectIDBytes, err := os.ReadFile(projectIDPath)
+	if err != nil {
+		panic(fmt.Errorf("failed to read project_id: %w", err))
+	}
+	firebaseAPIKeyBytes, err := os.ReadFile(firebaseAPIKeyPath)
+	if err != nil {
+		panic(fmt.Errorf("failed to read firebase_api_key: %w", err))
+	}
+
+	firebaseURL = string(firebaseURLBytes)
+	projectID = string(projectIDBytes)
+	firebaseAPIKey = string(firebaseAPIKeyBytes)
+	opt = option.WithCredentialsJSON([]byte(firebaseAPIKey))
+
+}
 
 func (db *Publisher) Connect() error {
 	ctx := context.Background()
-	opt := option.WithoutAuthentication()
-	config := &firebase.Config{DatabaseURL: "https://peezmafia-521be-default-rtdb.firebaseio.com"}
+	config := &firebase.Config{DatabaseURL: firebaseURL}
 	app, err := firebase.NewApp(ctx, config, opt)
 	if err != nil {
 		return fmt.Errorf("error initializing app: %v", err)
