@@ -9,10 +9,13 @@ import (
 	"github.com/google/uuid"
 	models "github.com/horcu/pm-models/types"
 	"google.golang.org/api/option"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
 	"path"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -34,18 +37,25 @@ var (
 var pub Publisher
 
 func init() {
+	_, b, _, _ := runtime.Caller(0)
+	basePath := filepath.Dir(b)
 
 	// Construct the path to the secret file
-	firebaseURLPath := path.Join("./etc/secrets", "firebase_url") // Match file name in secret
-	projectIDPath := path.Join("./etc/secrets", "project_id")
-	firebaseAPIKeyPath := path.Join("./etc/secrets", "firebase_api_key")
+	firebaseURLPath := path.Join(basePath, "/etc/secrets", "firebase_url") // Match file name in secret
+	projectIDPath := path.Join(basePath, "/etc/secrets", "project_id")
+	firebaseAPIKeyPath := path.Join(basePath, "/etc/secrets", "firebase_api_key")
 
 	// print the current  root file path
-	fmt.Printf("current root path: %v", path.Join("./"))
+	fmt.Printf("current root path: %v", basePath)
 
-	fmt.Printf("secrets at %v", path.Join(".etc/secrets"))
+	files, err := ioutil.ReadDir(basePath)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	fmt.Printf("firebase url at %v", firebaseURLPath)
+	for _, file := range files {
+		fmt.Println(file.Name())
+	}
 
 	// Read the secret data from the files
 	firebaseURLBytes, err := os.ReadFile(firebaseURLPath)
