@@ -32,7 +32,7 @@ var (
 var pub Publisher
 
 func (db *Publisher) Connect(firebaseURL string, firebaseAPIKey string, projectID string) error {
-	opt = option.WithCredentialsJSON([]byte(firebaseAPIKey))
+	opt = option.WithAPIKey(firebaseAPIKey)
 	ctx := context.Background()
 	config := &firebase.Config{DatabaseURL: firebaseURL, ProjectID: projectID}
 	app, err := firebase.NewApp(ctx, config, opt)
